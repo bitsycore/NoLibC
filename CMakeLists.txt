@@ -8,7 +8,8 @@ add_executable(NoLibC main.c
         nolibc/nolibc.h
         nolibc/priv_syscall.c
         nolibc/priv_syscall.h
-        nolibc/types.h)
+        nolibc/types.h
+)
 target_compile_options(NoLibC PRIVATE
         -fno-stack-protector
         -fno-builtin

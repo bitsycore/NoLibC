@@ -15,41 +15,55 @@
 // ============================
 
 u64 strlen(const u8* s) {
-	long n = 0;
+	u64 n = 0;
 	while (s[n] != '\0') n++;
 	return n;
 }
 
-u64 write(const u64 fd, const u8* buf, const u64 count) {
-	return syscall(SYS_write, fd, (u64)buf, count, 0, 0, 0);
-}
+// ============================
+// Print
+// ============================
 
-u64 putsLen(const u8* s, const u64 len) {
-	write(STDOUT, s, len);
-	return putcLr();
-}
-
-u64 puts(const u8* s) {
-	return putsLen(s, strlen(s));
-}
-
-u64 putcLr() {
+void fPrintNewLine(const u64 fd) {
 	static u8 NL = '\n';
-	return write(STDOUT, &NL, 1);
+	write(fd, &NL, 1);
 }
 
-// ============================
-// System
-// ============================
-
-u64 exit(const u64 status) {
-	syscall(SYS_exit, status, 0, 0, 0, 0, 0);
-	return 0;
+void printNewLine() {
+	fPrintNewLine(STDOUT);
 }
 
-int main();
+void fPrint2(const u64 fd, const u8* s, const u64 len) {
+	write(fd, s, len);
+}
 
-void _start() {
-	const u64 ret = main();
-	exit(ret);
+void fPrint(const u64 fd, const u8* s) {
+	write(fd, s, strlen(s));
+}
+
+void print2(const u8* s, const u64 len) {
+	write(STDOUT, s, len);
+}
+
+void print(const u8* s) {
+	write(STDOUT, s, strlen(s));
+}
+
+void fPrintln2(const u64 fd, const u8* s, const u64 len) {
+	write(fd, s, len);
+	printNewLine();
+}
+
+void fPrintln(const u64 fd, const u8* s) {
+	write(fd, s, strlen(s));
+}
+
+void println2(const u8* s, const u64 len) {
+	write(STDOUT, s, len);
+	printNewLine();
+}
+
+void println(const u8* s) {
+	write(STDOUT, s, strlen(s));
+	printNewLine();
 }

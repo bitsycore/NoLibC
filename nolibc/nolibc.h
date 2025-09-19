@@ -3,14 +3,37 @@
 
 #include "types.h"
 
+// ============================
+// SYSTEM
+// ============================
+
+void exit(s64 status);
+
+// ============================
+// STR
+// ============================
+
 u64 strlen(const u8* s);
-u64 puts(const u8* s);
-u64 putsLen(const u8* s, u64 len);
-u64 putcLr();
-#define putsEx(_s_) putsLen(\
-	_s_,\
-	sizeof(_s_)/sizeof((_s_)[0])\
-)
-u64 exit(u64 status);
+#define strlenK(_s_) ( ( sizeof((_s_)) / sizeof((_s_)[0]) ) - 1 )
+
+// ============================
+// PRINT
+// ============================
+
+void fPrint(u64 fd, const u8* s);
+void fPrint2(u64 fd, const u8* s, u64 len);
+#define fPrintK(_fd_, _s_) fPrint2((u64)(_fd_), (u8*)(_s_), strlenK(_s_))
+void fPrintln(u64 fd, const u8* s);
+void fPrintln2(u64 fd, const u8* s, u64 len);
+#define fPrintlnK(_fd_, _s_) fPrintln2((u64)(_fd_), (u8*)(_s_), strlenK(_s_))
+void fPrintNewLine(u64 fd);
+
+void print(const u8* s);
+void print2(const u8* s, u64 len);
+#define printK(_s_) print2((u8*)(_s_), strlenK(_s_))
+void println(const u8* s);
+void println2(const u8* s, u64 len);
+#define printlnK(_s_) println2((u8*)(_s_), strlenK(_s_))
+void printNewLine();
 
 #endif //NOLIBC_LIBC_H
