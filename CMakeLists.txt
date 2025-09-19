@@ -3,15 +3,22 @@ project(NoLibC C)
 
 set(CMAKE_C_STANDARD 23)
 
-add_executable(testlibc testlibc/main.c)
-
 add_executable(NoLibC
         main.c
-        nolibc.h
+        nolibc/headers/nlc.h
         nolibc/string.c
         nolibc/syscall.c
-        nolibc/format.c
-        nolibc/priv_nolibc.h
+        nolibc/print.c
+        nolibc/_syscall.h
+        nolibc/intrinsic.c
+        nolibc/write_buffer.c
+        nolibc/_write_buffer.h
+        nolibc/headers/nlc_types.h
+)
+
+target_include_directories(
+        NoLibC PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/nolibc/headers
 )
 
 target_compile_options(NoLibC PRIVATE
@@ -20,9 +27,16 @@ target_compile_options(NoLibC PRIVATE
         -nostdinc
 )
 
-target_link_options(NoLibC PRIVATE
+# Common options for all platforms
+set(COMMON_LINK_OPTIONS
         -fno-builtin
         -fno-stack-protector
         -nostdlib
         -nodefaultlibs
 )
+
+if(APPLE)
+    list(APPEND COMMON_LINK_OPTIONS -Wl,-lSystem)
+endif()
+
+target_link_options(NoLibC PRIVATE ${COMMON_LINK_OPTIONS})

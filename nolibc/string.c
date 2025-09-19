@@ -1,5 +1,4 @@
-#include "priv_nolibc.h"
-#include "../nolibc.h"
+#include "headers/nlc.h"
 
 u64 StrLen(const s8* s) {
 	u64 n = 0;

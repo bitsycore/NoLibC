@@ -1,35 +1,5 @@
-#include "../nolibc.h"
-#include "priv_nolibc.h"
-
-#define OUTBUF_SIZE 2048
-
-typedef struct WriteBuffer {
-	s8 data[OUTBUF_SIZE];
-	u64 len;
-	u64 fd;
-} WriteBuffer;
-
-// ============================
-// MARK: Buffer
-// ============================
-
-static void WriteBufferFlush(WriteBuffer* b) {
-	if (b->len > 0) {
-		SysWrite(b->fd, (u8*)b->data, b->len);
-		b->len = 0;
-	}
-}
-
-static void WriteBufferPutc(WriteBuffer* b, const s8 c) {
-	if (b->len >= OUTBUF_SIZE) WriteBufferFlush(b);
-	b->data[b->len++] = c;
-}
-
-static void WriteBufferPuts(WriteBuffer* b, const s8* s, const u64 n) {
-	for (u64 i = 0; i < n; i++) {
-		WriteBufferPutc(b, s[i]);
-	}
-}
+#include "_syscall.h"
+#include "_write_buffer.h"
 
 // ============================
 // MARK: Integer to string
