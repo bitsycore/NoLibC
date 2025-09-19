@@ -1,7 +1,7 @@
 #include "../nolibc.h"
 #include "priv_nolibc.h"
 
-sPtr syscall(
+sPtr SysCall(
 	sPtr n,
 	uPtr a,
 	uPtr b,
@@ -78,6 +78,7 @@ sPtr syscall(
 // GCC use memset for zero-init
 // ============================
 
+#ifdef __clang__
 void* memset(void* ptr, const int value, uPtr num) {
 	unsigned char* p = ptr;
 	while (num--) {
@@ -86,21 +87,66 @@ void* memset(void* ptr, const int value, uPtr num) {
 	return ptr;
 }
 
+void* memmove(void *dst, const void *src, uPtr n) {
+	if (n == 0 || dst == src) return dst;
+
+	u8 *d = dst;
+	const u8 *s = src;
+
+	if (d < s) {
+		const uPtr align_mask = sizeof(uPtr) - 1;
+		while (n && ((uPtr)d & align_mask) != 0 && n) {
+			*d++ = *s++;
+			--n;
+		}
+		uPtr *dw = (uPtr *)d;
+		const uPtr *sw = (const uPtr *)s;
+		while (n >= sizeof(uPtr)) {
+			*dw++ = *sw++;
+			n -= sizeof(uPtr);
+		}
+		d = (u8 *)dw;
+		s = (const u8 *)sw;
+		while (n--) *d++ = *s++;
+	} else {
+		// copy backward
+		d += n;
+		s += n;
+		const uPtr align_mask = sizeof(uPtr) - 1;
+		while (n && ((uPtr)d & align_mask) != 0) {
+			*--d = *--s;
+			--n;
+		}
+		uPtr *dw = (uPtr *)d;
+		const uPtr *sw = (const uPtr *)s;
+		while (n >= sizeof(uPtr)) {
+			*--dw = *--sw;
+			n -= sizeof(uPtr);
+		}
+		d = (u8 *)dw;
+		s = (const u8 *)sw;
+		while (n--) *--d = *--s;
+	}
+
+	return dst;
+}
+#endif
+
 // ============================
 // System
 // ============================
 
-sPtr write(const u64 fd, const u8* buf, const u64 count) {
-	return syscall(SYS_write, (uPtr)fd, (uPtr)buf, (uPtr)count, 0, 0, 0);
+sPtr SysWrite(const u64 fd, const u8* buf, const u64 count) {
+	return SysCall(SYS_write, (uPtr)fd, (uPtr)buf, (uPtr)count, 0, 0, 0);
 }
 
-void exit(const s64 status) {
-	syscall(SYS_exit, status, 0, 0, 0, 0, 0);
+void SysExit(const s64 status) {
+	SysCall(SYS_exit, status, 0, 0, 0, 0, 0);
 }
 
 int main();
 
 void _start() {
 	const int ret = main();
-	exit(ret);
+	SysExit(ret);
 }

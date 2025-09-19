@@ -35,7 +35,7 @@
 # error "unsupported arch"
 #endif
 
-sPtr syscall(
+sPtr SysCall(
 	sPtr n,
 	uPtr a,
 	uPtr b,
@@ -45,6 +45,6 @@ sPtr syscall(
 	uPtr f
 );
 
-sPtr write(u64 fd, const u8* buf, u64 count);
+sPtr SysWrite(u64 fd, const u8* buf, u64 count);
 
 #endif //NOLIBC_SYSCALL_H

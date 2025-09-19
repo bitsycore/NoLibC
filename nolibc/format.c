@@ -13,21 +13,21 @@ typedef struct WriteBuffer {
 // MARK: Buffer
 // ============================
 
-static void WriteBuffer_flush(WriteBuffer* b) {
+static void WriteBufferFlush(WriteBuffer* b) {
 	if (b->len > 0) {
-		write(b->fd, (u8*)b->data, b->len);
+		SysWrite(b->fd, (u8*)b->data, b->len);
 		b->len = 0;
 	}
 }
 
-static void WriteBuffer_putc(WriteBuffer* b, const s8 c) {
-	if (b->len >= OUTBUF_SIZE) WriteBuffer_flush(b);
+static void WriteBufferPutc(WriteBuffer* b, const s8 c) {
+	if (b->len >= OUTBUF_SIZE) WriteBufferFlush(b);
 	b->data[b->len++] = c;
 }
 
-static void WriteBuffer_puts(WriteBuffer* b, const s8* s, const u64 n) {
+static void WriteBufferPuts(WriteBuffer* b, const s8* s, const u64 n) {
 	for (u64 i = 0; i < n; i++) {
-		WriteBuffer_putc(b, s[i]);
+		WriteBufferPutc(b, s[i]);
 	}
 }
 
@@ -35,7 +35,7 @@ static void WriteBuffer_puts(WriteBuffer* b, const s8* s, const u64 n) {
 // MARK: Integer to string
 // ============================
 
-static void utoa_base(u64 value, const s8 base, s8* out, u64* out_len, const u32 min_width) {
+static void ConvertU64ToStr(u64 value, const s8 base, s8* out, u64* out_len, const u32 min_width) {
 	u64 pos = 0;
 	if (value == 0) {
 		out[pos++] = '0';
@@ -63,16 +63,16 @@ static void utoa_base(u64 value, const s8 base, s8* out, u64* out_len, const u32
 	*out_len = pos;
 }
 
-static void itoa_signed(const s64 val, s8* out, u64* out_len) {
+static void ConvertS64ToStr(const s64 val, s8* out, u64* out_len) {
 	if (val < 0) {
 		const u64 v = (u64)-val;
 		u64 len;
-		utoa_base(v, 10, out + 1, &len, 0);
+		ConvertU64ToStr(v, 10, out + 1, &len, 0);
 		out[0] = '-';
 		*out_len = len + 1;
 	}
 	else {
-		utoa_base((u64)val, 10, out, out_len, 0);
+		ConvertU64ToStr((u64)val, 10, out, out_len, 0);
 	}
 }
 
@@ -80,7 +80,7 @@ static void itoa_signed(const s64 val, s8* out, u64* out_len) {
 // MARK: Format
 // ============================
 
-static void buffer_printf(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
+static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
 	const s8* p = fmt;
 	s8 numBuff[64];
 
@@ -92,13 +92,13 @@ static void buffer_printf(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
 			// find next % or end to batch writes
 			const s8* start = p;
 			while (*p && *p != '%') p++;
-			WriteBuffer_puts(b, start, (u64)(p - start));
+			WriteBufferPuts(b, start, (u64)(p - start));
 			continue;
 		}
 		// handle %
 		p++; // skip '%'
 		if (*p == '%') {
-			WriteBuffer_putc(b, PERCENT);
+			WriteBufferPutc(b, PERCENT);
 			p++;
 			continue;
 		}
@@ -111,42 +111,46 @@ static void buffer_printf(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
 		}
 
 		switch (*p) {
+		case 'f': {
+			SysExit(55);
+			break;
+		}
 		case 's': {
 			const s8* s = __builtin_va_arg(ap, const s8*);
 			if (!s) s = (const s8*)"(null)";
-			WriteBuffer_puts(b, s, strlen(s));
+			WriteBufferPuts(b, s, StrLen(s));
 			break;
 		}
 		case 'd': {
-			const long long v = __builtin_va_arg(ap, long long);
+			const s64 v = __builtin_va_arg(ap, s64);
 			u64 len = 0;
-			itoa_signed(v, numBuff, &len);
-			WriteBuffer_puts(b, numBuff, len);
+			ConvertS64ToStr(v, numBuff, &len);
+			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 'u': {
-			const unsigned long long v = __builtin_va_arg(ap, unsigned long long);
+			const u64 v = __builtin_va_arg(ap, u64);
 			u64 len = 0;
-			utoa_base(v, 10, numBuff, &len, width);
-			WriteBuffer_puts(b, numBuff, len);
+			ConvertU64ToStr(v, 10, numBuff, &len, width);
+			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 'x': {
-			const unsigned long long v = __builtin_va_arg(ap, unsigned long long);
+			const u64 v = __builtin_va_arg(ap, u64);
 			u64 len = 0;
-			utoa_base(v, 16, numBuff, &len, width);
-			WriteBuffer_puts(b, numBuff, len);
+			ConvertU64ToStr(v, 16, numBuff, &len, width);
+			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 'c': {
-			const int ch = __builtin_va_arg(ap, int);
-			WriteBuffer_putc(b, (s8)ch);
+			const sPtr ch = __builtin_va_arg(ap, sPtr);
+			WriteBufferPutc(b, (s8)ch);
 			break;
 		}
 		default:
-			WriteBuffer_putc(b, PERCENT);
-			if (*p) WriteBuffer_putc(b, *p);
-			else WriteBuffer_putc(b, QUESTION);
+			WriteBufferPutc(b, PERCENT);
+			if (*p) WriteBufferPutc(b, *p);
+			else WriteBufferPutc(b, QUESTION);
 			break;
 		}
 		if (*p) p++;
@@ -161,111 +165,80 @@ static void buffer_printf(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
 // PRINT FMT
 // ---------------------------
 
-void printFmtVarFile(const u64 fd, const s8* fmt, __builtin_va_list va_list) {
+void PrintFmtVarFile(const u64 fd, const s8* fmt, __builtin_va_list va_list) {
 	WriteBuffer b = {.len = 0, .fd = fd};
-	buffer_printf(fmt, va_list, &b);
-	WriteBuffer_flush(&b);
+	WriteBufferFmtVar(fmt, va_list, &b);
+	WriteBufferFlush(&b);
 }
 
-void printFmtFile(const u64 fd, const s8* fmt, ...) {
+void PrintFmtFile(const u64 fd, const s8* fmt, ...) {
 	WriteBuffer b = {.len = 0, .fd = fd};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
-	buffer_printf(fmt, ap, &b);
+	WriteBufferFmtVar(fmt, ap, &b);
 	__builtin_va_end(ap);
-	WriteBuffer_flush(&b);
+	WriteBufferFlush(&b);
 }
 
-void printFmt(const s8* fmt, ...) {
+void PrintFmt(const s8* fmt, ...) {
 	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
-	buffer_printf(fmt, ap, &b);
+	WriteBufferFmtVar(fmt, ap, &b);
 	__builtin_va_end(ap);
-	WriteBuffer_flush(&b);
-}
-
-// ---------------------------
-// PRINT FMT LN
-// ---------------------------
-
-void printLnFmtVarFile(const u64 fd, const s8* fmt, __builtin_va_list va_list) {
-	WriteBuffer b = {.len = 0, .fd = fd};
-	buffer_printf(fmt, va_list, &b);
-	WriteBuffer_putc(&b, '\n');
-	WriteBuffer_flush(&b);
-}
-
-void printLnFmtFile(const u64 fd, const s8* fmt, ...) {
-	WriteBuffer b = {.len = 0, .fd = fd};
-	__builtin_va_list ap;
-	__builtin_va_start(ap, fmt);
-	buffer_printf(fmt, ap, &b);
-	__builtin_va_end(ap);
-	WriteBuffer_putc(&b, '\n');
-	WriteBuffer_flush(&b);
-}
-
-void printLnFmt(const s8* fmt, ...) {
-	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
-	__builtin_va_list ap;
-	__builtin_va_start(ap, fmt);
-	buffer_printf(fmt, ap, &b);
-	__builtin_va_end(ap);
-	WriteBuffer_putc(&b, '\n');
-	WriteBuffer_flush(&b);
+	WriteBufferFlush(&b);
 }
 
 // ---------------------------
 // PRINT NEW LINE
 // ---------------------------
 
-void printNewLineFile(const u64 fd) {
+void PrintNewLineFile(const u64 fd) {
 	static s8 NL = '\n';
-	write(fd, (u8*)&NL, 1);
+	SysWrite(fd, (u8*)&NL, 1);
 }
 
-void printNewLine() {
-	printNewLineFile(FILE_STDOUT);
+void PrintNewLine() {
+	PrintNewLineFile(FILE_STDOUT);
 }
 
 // ---------------------------
 // PRINT
 // ---------------------------
 
-void printFile(const u64 fd, const s8* s) {
-	printFileLen(fd, s, strlen(s));
+void PrintFile(const u64 fd, const s8* s) {
+	PrintFileLen(fd, s, StrLen(s));
 }
 
-void printFileLen(const u64 fd, const s8* s, const u64 len) {
-	write(fd, (u8*)s, len);
+void PrintFileLen(const u64 fd, const s8* s, const u64 len) {
+	SysWrite(fd, (u8*)s, len);
 }
 
-void print(const s8* s) {
-	printFile(FILE_STDOUT, s);
+void Print(const s8* s) {
+	PrintFile(FILE_STDOUT, s);
 }
 
-void printLen(const s8* s, const u64 len) {
-	printFileLen(FILE_STDOUT, s, len);
+void PrintLen(const s8* s, const u64 len) {
+	PrintFileLen(FILE_STDOUT, s, len);
 }
 
 // ---------------------------
 // PRINT LN
 // ---------------------------
 
-void printLnFile(const u64 fd, const s8* s) {
-	printLnFileLen(fd, s, strlen(s));
+void PrintLnFile(const u64 fd, const s8* s) {
+	PrintLnFileLen(fd, s, StrLen(s));
 }
 
-void printLnFileLen(const u64 fd, const s8* s, const u64 len) {
-	write(fd, (u8*)s, len);
-	printNewLine();
+void PrintLnFileLen(const u64 fd, const s8* s, const u64 len) {
+	SysWrite(fd, (u8*)s, len);
+	PrintNewLine();
 }
 
-void printLn(const s8* s) {
-	printLnFile(FILE_STDOUT, s);
+void PrintLn(const s8* s) {
+	PrintLnFile(FILE_STDOUT, s);
 }
 
-void printLnLen(const s8* s, const u64 len) {
-	printLnFileLen(FILE_STDOUT, s, len);
+void PrintLnLen(const s8* s, const u64 len) {
+	PrintLnFileLen(FILE_STDOUT, s, len);
 }

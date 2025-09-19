@@ -5,23 +5,24 @@ set(CMAKE_C_STANDARD 23)
 
 add_executable(testlibc testlibc/main.c)
 
-add_executable(NoLibC main.c
-        nolibc/string.c
+add_executable(NoLibC
+        main.c
         nolibc.h
+        nolibc/string.c
         nolibc/syscall.c
-        nolibc/priv_nolibc.h
         nolibc/format.c
+        nolibc/priv_nolibc.h
 )
+
 target_compile_options(NoLibC PRIVATE
-        -fno-stack-protector
         -fno-builtin
-        -fno-builtin-memset
+        -fno-stack-protector
         -nostdinc
 )
+
 target_link_options(NoLibC PRIVATE
+        -fno-builtin
+        -fno-stack-protector
         -nostdlib
         -nodefaultlibs
-        -fno-builtin
-        -nostdinc
-        -fno-stack-protector
 )
