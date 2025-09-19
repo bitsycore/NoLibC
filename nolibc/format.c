@@ -35,7 +35,7 @@ static void WriteBufferPuts(WriteBuffer* b, const s8* s, const u64 n) {
 // MARK: Integer to string
 // ============================
 
-static void ConvertU64ToStr(u64 value, const s8 base, s8* out, u64* out_len, const u32 min_width) {
+void UnsignedToString(u64 value, const s8 base, s8* out, u64* out_len, const u32 min_width) {
 	u64 pos = 0;
 	if (value == 0) {
 		out[pos++] = '0';
@@ -63,16 +63,16 @@ static void ConvertU64ToStr(u64 value, const s8 base, s8* out, u64* out_len, con
 	*out_len = pos;
 }
 
-static void ConvertS64ToStr(const s64 val, s8* out, u64* out_len) {
+void IntegerToString(const s64 val, s8* out, u64* out_len) {
 	if (val < 0) {
 		const u64 v = (u64)-val;
 		u64 len;
-		ConvertU64ToStr(v, 10, out + 1, &len, 0);
+		UnsignedToString(v, 10, out + 1, &len, 0);
 		out[0] = '-';
 		*out_len = len + 1;
 	}
 	else {
-		ConvertU64ToStr((u64)val, 10, out, out_len, 0);
+		UnsignedToString((u64)val, 10, out, out_len, 0);
 	}
 }
 
@@ -124,21 +124,21 @@ static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* 
 		case 'd': {
 			const s64 v = __builtin_va_arg(ap, s64);
 			u64 len = 0;
-			ConvertS64ToStr(v, numBuff, &len);
+			IntegerToString(v, numBuff, &len);
 			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 'u': {
 			const u64 v = __builtin_va_arg(ap, u64);
 			u64 len = 0;
-			ConvertU64ToStr(v, 10, numBuff, &len, width);
+			UnsignedToString(v, 10, numBuff, &len, width);
 			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 'x': {
 			const u64 v = __builtin_va_arg(ap, u64);
 			u64 len = 0;
-			ConvertU64ToStr(v, 16, numBuff, &len, width);
+			UnsignedToString(v, 16, numBuff, &len, width);
 			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
