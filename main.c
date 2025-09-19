@@ -1,29 +1,45 @@
-#include "nolibc/nolibc.h"
+#include "nolibc.h"
 
 int main() {
-	const u8 s[] = u8"Test123";
 
-	print(s);
-	printNewLine();
-	print2(s, strlenK(s));
-	printNewLine();
-	printK(s);
-	printNewLine();
+	// --------------------------------------
 
-	println(s);
-	println2(s, strlenK(s));
-	printlnK(s);
+	print("[TEST]: print\n");
+	printLen("[TEST]: printLen\n", strlenK("[TEST]: printLen\n"));
+	printK("[TEST]: printK\n");
 
-	printlnF(u8"Hello %s I am here %s", s, s);
-	printlnF(u8"Test %d, 0x%x", 55, 0x66);
+	// --------------------------------------
 
-	const u8 s2[] = u8"123456789";
-	const u64 len = strlen(s2);
+	printFile(FILE_STDOUT, "[TEST]: printFile\n");
+	printFileLen(FILE_STDOUT, "[TEST]: printFileLen\n", strlenK("[TEST]: printFileLen\n"));
+	printFileK(FILE_STDOUT, "[TEST]: printFileK\n");
 
-	printlnF(u8"strlen: %d", len);
-	printlnF(u8"strlenK: %d", strlenK(s2));
+	// --------------------------------------
 
-	printF(u8"Hello\nTest");
+	printLn("[TEST]: printLn");
+	printLnLen("[TEST]: printLnLen", strlenK("[TEST]: printLnLen"));
+	printLnK("[TEST]: printLnK");
+
+	// --------------------------------------
+
+	printLnFile(FILE_STDOUT, "[TEST]: printLnFile");
+	printLnFileLen(FILE_STDOUT, "[TEST]: printLnFileLen", strlenK("[TEST]: printLnFileLen"));
+	printLnFileK(FILE_STDOUT, "[TEST]: printLnFileK");
+
+	// --------------------------------------
+
+	printFmt("[TEST]: printFmt int=%d, string=%s\n", 256, "\"TestString\"");
+	printFmtFile(FILE_STDOUT, "[TEST]: printFmtFile int=%d, string=%s\n", 512, "\"Hahaha\"");
+	printLnFmt("[TEST]: printFmtLn int=%d, string=%s", 768, "\"HelloStr\"");
+	printLnFmtFile(FILE_STDOUT, "[TEST]: printLnFmtFile int=%d, string=%s", 1024, "\"FmtFile\"");
+
+	// --------------------------------------
+
+	const s8 s3[] = "1234567";
+	printLnFmt("[TEST]: strlen=%d", strlen(s3));
+	printLnFmt("[TEST]: strlenK=%d", strlenK(s3));
+
+	// --------------------------------------
 
 	return 0;
 }

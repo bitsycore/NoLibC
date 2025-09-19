@@ -1,4 +1,5 @@
-#include "priv_syscall.h"
+#include "../nolibc.h"
+#include "priv_nolibc.h"
 
 sPtr syscall(
 	sPtr n,

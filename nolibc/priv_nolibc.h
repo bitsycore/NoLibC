@@ -1,7 +1,7 @@
 #ifndef NOLIBC_SYSCALL_H
 #define NOLIBC_SYSCALL_H
 
-#include "types.h"
+#include "../nolibc.h"
 
 // ============================
 // SYSCALL NUMBERS
@@ -35,15 +35,6 @@
 # error "unsupported arch"
 #endif
 
-
-// ============================
-// FD
-// ============================
-
-#define STDIN 0
-#define STDOUT 1
-#define STDERR 2
-
 sPtr syscall(
 	sPtr n,
 	uPtr a,
@@ -55,6 +46,5 @@ sPtr syscall(
 );
 
 sPtr write(u64 fd, const u8* buf, u64 count);
-void exit(s64 status);
 
 #endif //NOLIBC_SYSCALL_H

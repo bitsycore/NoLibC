@@ -1,39 +1,41 @@
-#include "nolibc.h"
-#include "priv_syscall.h"
-#include "types.h"
+#include "../nolibc.h"
+#include "priv_nolibc.h"
 
-#define OUTBUF_SIZE 8196
+#define OUTBUF_SIZE 2048
 
-typedef struct {
-	u8 data[OUTBUF_SIZE];
+typedef struct WriteBuffer {
+	s8 data[OUTBUF_SIZE];
 	u64 len;
 	u64 fd;
-} OutBuf;
+} WriteBuffer;
 
-static void buf_flush(OutBuf* b) {
+// ============================
+// MARK: Buffer
+// ============================
+
+static void WriteBuffer_flush(WriteBuffer* b) {
 	if (b->len > 0) {
-		write(b->fd, b->data, b->len);
+		write(b->fd, (u8*)b->data, b->len);
 		b->len = 0;
 	}
 }
 
-static void buf_putc(OutBuf* b, const u8 c) {
-	if (b->len >= OUTBUF_SIZE) buf_flush(b);
+static void WriteBuffer_putc(WriteBuffer* b, const s8 c) {
+	if (b->len >= OUTBUF_SIZE) WriteBuffer_flush(b);
 	b->data[b->len++] = c;
 }
 
-static void buf_write(OutBuf* b, const u8* s, const u64 n) {
+static void WriteBuffer_puts(WriteBuffer* b, const s8* s, const u64 n) {
 	for (u64 i = 0; i < n; i++) {
-		buf_putc(b, s[i]);
+		WriteBuffer_putc(b, s[i]);
 	}
 }
 
 // ============================
-// Integer to string
+// MARK: Integer to string
 // ============================
 
-static void utoa_base(u64 value, const u8 base, u8* out, u64* out_len, const u32 min_width) {
-	// out must be large enough (at least 32 bytes)
+static void utoa_base(u64 value, const s8 base, s8* out, u64* out_len, const u32 min_width) {
 	u64 pos = 0;
 	if (value == 0) {
 		out[pos++] = '0';
@@ -46,7 +48,7 @@ static void utoa_base(u64 value, const u8 base, u8* out, u64* out_len, const u32
 		}
 		// reverse
 		for (u64 i = 0, j = pos - 1; i < j; ++i, --j) {
-			const u8 t = out[i];
+			const s8 t = out[i];
 			out[i] = out[j];
 			out[j] = t;
 		}
@@ -61,7 +63,7 @@ static void utoa_base(u64 value, const u8 base, u8* out, u64* out_len, const u32
 	*out_len = pos;
 }
 
-static void itoa_signed(const s64 val, u8* out, u64* out_len) {
+static void itoa_signed(const s64 val, s8* out, u64* out_len) {
 	if (val < 0) {
 		const u64 v = (u64)-val;
 		u64 len;
@@ -75,27 +77,28 @@ static void itoa_signed(const s64 val, u8* out, u64* out_len) {
 }
 
 // ============================
-// Printf
+// MARK: Format
 // ============================
 
-static void buffer_printf(const u8* fmt, __builtin_va_list ap, OutBuf* b) {
-	const u8* p = fmt;
-	u8 numBuff[64];
-	static u8 PERCENT = '%';
-	static u8 QUESTION = '?';
+static void buffer_printf(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
+	const s8* p = fmt;
+	s8 numBuff[64];
+
+	static s8 PERCENT = '%';
+	static s8 QUESTION = '?';
 
 	while (*p) {
 		if (*p != '%') {
 			// find next % or end to batch writes
-			const u8* start = p;
+			const s8* start = p;
 			while (*p && *p != '%') p++;
-			buf_write(b, start, (u64)(p - start));
+			WriteBuffer_puts(b, start, (u64)(p - start));
 			continue;
 		}
 		// handle %
 		p++; // skip '%'
 		if (*p == '%') {
-			buf_putc(b, PERCENT);
+			WriteBuffer_putc(b, PERCENT);
 			p++;
 			continue;
 		}
@@ -109,41 +112,41 @@ static void buffer_printf(const u8* fmt, __builtin_va_list ap, OutBuf* b) {
 
 		switch (*p) {
 		case 's': {
-			const u8* s = __builtin_va_arg(ap, const u8*);
-			if (!s) s = (const u8*)"(null)";
-			buf_write(b, s, strlen(s));
+			const s8* s = __builtin_va_arg(ap, const s8*);
+			if (!s) s = (const s8*)"(null)";
+			WriteBuffer_puts(b, s, strlen(s));
 			break;
 		}
 		case 'd': {
 			const long long v = __builtin_va_arg(ap, long long);
 			u64 len = 0;
 			itoa_signed(v, numBuff, &len);
-			buf_write(b, numBuff, len);
+			WriteBuffer_puts(b, numBuff, len);
 			break;
 		}
 		case 'u': {
 			const unsigned long long v = __builtin_va_arg(ap, unsigned long long);
 			u64 len = 0;
 			utoa_base(v, 10, numBuff, &len, width);
-			buf_write(b, numBuff, len);
+			WriteBuffer_puts(b, numBuff, len);
 			break;
 		}
 		case 'x': {
 			const unsigned long long v = __builtin_va_arg(ap, unsigned long long);
 			u64 len = 0;
 			utoa_base(v, 16, numBuff, &len, width);
-			buf_write(b, numBuff, len);
+			WriteBuffer_puts(b, numBuff, len);
 			break;
 		}
 		case 'c': {
 			const int ch = __builtin_va_arg(ap, int);
-			buf_putc(b, (u8)ch);
+			WriteBuffer_putc(b, (s8)ch);
 			break;
 		}
 		default:
-			buf_putc(b, PERCENT);
-			if (*p) buf_putc(b, *p);
-			else buf_putc(b, QUESTION);
+			WriteBuffer_putc(b, PERCENT);
+			if (*p) WriteBuffer_putc(b, *p);
+			else WriteBuffer_putc(b, QUESTION);
 			break;
 		}
 		if (*p) p++;
@@ -151,64 +154,118 @@ static void buffer_printf(const u8* fmt, __builtin_va_list ap, OutBuf* b) {
 }
 
 // ============================
-// MARK: Public
+// MARK: Print
 // ============================
 
 // ---------------------------
-// NO LN
+// PRINT FMT
 // ---------------------------
 
-void vfPrintF(const u64 fd, const u8* fmt, __builtin_va_list va_list) {
-	OutBuf b = {.len = 0, .fd = fd};
+void printFmtVarFile(const u64 fd, const s8* fmt, __builtin_va_list va_list) {
+	WriteBuffer b = {.len = 0, .fd = fd};
 	buffer_printf(fmt, va_list, &b);
-	buf_flush(&b);
+	WriteBuffer_flush(&b);
 }
 
-void fPrintF(const u64 fd, const u8* fmt, ...) {
-	OutBuf b = {.len = 0, .fd = fd};
+void printFmtFile(const u64 fd, const s8* fmt, ...) {
+	WriteBuffer b = {.len = 0, .fd = fd};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
 	buffer_printf(fmt, ap, &b);
 	__builtin_va_end(ap);
-	buf_flush(&b);
+	WriteBuffer_flush(&b);
 }
 
-void printF(const u8* fmt, ...) {
-	OutBuf b = {.len = 0, .fd = STDOUT};
+void printFmt(const s8* fmt, ...) {
+	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
 	buffer_printf(fmt, ap, &b);
 	__builtin_va_end(ap);
-	buf_flush(&b);
+	WriteBuffer_flush(&b);
 }
 
 // ---------------------------
-// LN
+// PRINT FMT LN
 // ---------------------------
 
-void vfPrintlnF(const u64 fd, const u8* fmt, __builtin_va_list va_list) {
-	OutBuf b = {.len = 0, .fd = fd};
+void printLnFmtVarFile(const u64 fd, const s8* fmt, __builtin_va_list va_list) {
+	WriteBuffer b = {.len = 0, .fd = fd};
 	buffer_printf(fmt, va_list, &b);
-	buf_putc(&b, '\n');
-	buf_flush(&b);
+	WriteBuffer_putc(&b, '\n');
+	WriteBuffer_flush(&b);
 }
 
-void fPrintlnF(const u64 fd, const u8* fmt, ...) {
-	OutBuf b = {.len = 0, .fd = fd};
+void printLnFmtFile(const u64 fd, const s8* fmt, ...) {
+	WriteBuffer b = {.len = 0, .fd = fd};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
 	buffer_printf(fmt, ap, &b);
 	__builtin_va_end(ap);
-	buf_putc(&b, '\n');
-	buf_flush(&b);
+	WriteBuffer_putc(&b, '\n');
+	WriteBuffer_flush(&b);
 }
 
-void printlnF(const u8* fmt, ...) {
-	OutBuf b = {.len = 0, .fd = STDOUT};
+void printLnFmt(const s8* fmt, ...) {
+	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
 	__builtin_va_list ap;
 	__builtin_va_start(ap, fmt);
 	buffer_printf(fmt, ap, &b);
 	__builtin_va_end(ap);
-	buf_putc(&b, '\n');
-	buf_flush(&b);
+	WriteBuffer_putc(&b, '\n');
+	WriteBuffer_flush(&b);
+}
+
+// ---------------------------
+// PRINT NEW LINE
+// ---------------------------
+
+void printNewLineFile(const u64 fd) {
+	static s8 NL = '\n';
+	write(fd, (u8*)&NL, 1);
+}
+
+void printNewLine() {
+	printNewLineFile(FILE_STDOUT);
+}
+
+// ---------------------------
+// PRINT
+// ---------------------------
+
+void printFile(const u64 fd, const s8* s) {
+	printFileLen(fd, s, strlen(s));
+}
+
+void printFileLen(const u64 fd, const s8* s, const u64 len) {
+	write(fd, (u8*)s, len);
+}
+
+void print(const s8* s) {
+	printFile(FILE_STDOUT, s);
+}
+
+void printLen(const s8* s, const u64 len) {
+	printFileLen(FILE_STDOUT, s, len);
+}
+
+// ---------------------------
+// PRINT LN
+// ---------------------------
+
+void printLnFile(const u64 fd, const s8* s) {
+	printLnFileLen(fd, s, strlen(s));
+}
+
+void printLnFileLen(const u64 fd, const s8* s, const u64 len) {
+	write(fd, (u8*)s, len);
+	printNewLine();
+}
+
+void printLn(const s8* s) {
+	printLnFile(FILE_STDOUT, s);
+}
+
+void printLnLen(const s8* s, const u64 len) {
+	printLnFileLen(FILE_STDOUT, s, len);
 }

@@ -3,12 +3,13 @@ project(NoLibC C)
 
 set(CMAKE_C_STANDARD 23)
 
+add_executable(testlibc testlibc/main.c)
+
 add_executable(NoLibC main.c
-        nolibc/nolibc.c
-        nolibc/nolibc.h
-        nolibc/priv_syscall.c
-        nolibc/priv_syscall.h
-        nolibc/types.h
+        nolibc/string.c
+        nolibc.h
+        nolibc/syscall.c
+        nolibc/priv_nolibc.h
         nolibc/format.c
 )
 target_compile_options(NoLibC PRIVATE
