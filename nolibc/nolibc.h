@@ -36,4 +36,13 @@ void println2(const u8* s, u64 len);
 #define printlnK(_s_) println2((u8*)(_s_), strlenK(_s_))
 void printNewLine();
 
+
+void vfPrintF(u64 fd, const u8 *fmt, __builtin_va_list va_list);
+void fPrintF(u64 fd, const u8 *fmt, ...);
+void printF(const u8 *fmt, ...);
+
+void vfPrintlnF(u64 fd, const u8 *fmt, __builtin_va_list va_list);
+void fPrintlnF(u64 fd, const u8 *fmt, ...);
+void printlnF(const u8 *fmt, ...);
+
 #endif //NOLIBC_LIBC_H

@@ -35,7 +35,7 @@ sPtr syscall(
 #elif defined(__aarch64__)
 
 	register uPtr x8 asm("x8") = n;
-	register sPtr x0 asm("x0") = a;
+	register uPtr x0 asm("x0") = a;
 	register uPtr x1 asm("x1") = b;
 	register uPtr x2 asm("x2") = c;
 	register uPtr x3 asm("x3") = d;
@@ -47,7 +47,7 @@ sPtr syscall(
 		: "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5), "r"(x8)
 		: "memory"
 	);
-	ret = x0;
+	ret = (sPtr)x0;
 
 #elif defined(__arm__)
 
@@ -71,6 +71,18 @@ sPtr syscall(
 #endif
 
 	return ret;
+}
+
+// ============================
+// GCC use memset for zero-init
+// ============================
+
+void* memset(void* ptr, const int value, uPtr num) {
+	unsigned char* p = ptr;
+	while (num--) {
+		*p++ = (unsigned char)value;
+	}
+	return ptr;
 }
 
 // ============================

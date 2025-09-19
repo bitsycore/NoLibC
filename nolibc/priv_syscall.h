@@ -3,6 +3,10 @@
 
 #include "types.h"
 
+// ============================
+// SYSCALL NUMBERS
+// ============================
+
 #if defined(__x86_64__)
 # define SYS_read   0
 # define SYS_write  1
@@ -30,6 +34,15 @@
 #else
 # error "unsupported arch"
 #endif
+
+
+// ============================
+// FD
+// ============================
+
+#define STDIN 0
+#define STDOUT 1
+#define STDERR 2
 
 sPtr syscall(
 	sPtr n,

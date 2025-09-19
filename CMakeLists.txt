@@ -9,14 +9,18 @@ add_executable(NoLibC main.c
         nolibc/priv_syscall.c
         nolibc/priv_syscall.h
         nolibc/types.h
+        nolibc/format.c
 )
 target_compile_options(NoLibC PRIVATE
         -fno-stack-protector
         -fno-builtin
+        -fno-builtin-memset
+        -nostdinc
 )
 target_link_options(NoLibC PRIVATE
         -nostdlib
         -nodefaultlibs
         -fno-builtin
+        -nostdinc
         -fno-stack-protector
 )
