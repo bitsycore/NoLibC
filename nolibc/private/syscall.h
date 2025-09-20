@@ -11,29 +11,24 @@
 #define SEEK_CUR		1
 #define SEEK_END		2
 
-#if defined(__APPLE__) && defined(__MACH__)
+#define PROT_NONE		0x0
+#define PROT_READ		0x1
+#define PROT_WRITE		0x2
+#define PROT_EXEC		0x4
 
-	#define PROT_NONE		0x0
-	#define PROT_READ		0x1
-	#define PROT_WRITE		0x2
-	#define PROT_EXEC		0x4
+#define MAP_SHARED      0x01
+#define MAP_PRIVATE     0x02
+#define MAP_FIXED       0x10
 
-	#define MAP_PRIVATE     0x0002
+#if defined(__APPLE__)
+
 	#define MAP_ANON        0x1000
 	#define MAP_ANONYMOUS   MAP_ANON
 
 #elif defined(__linux__)
 
-	#define PROT_NONE		0x0
-	#define PROT_READ		0x1
-	#define PROT_WRITE		0x2
-	#define PROT_EXEC		0x4
-
-	#define MAP_SHARED		0x01
-	#define MAP_PRIVATE     0x02
-	#define MAP_FIXED		0x10
 	#define MAP_ANONYMOUS   0x20
-	#define MAP_ANON		MAP_ANONYMOUS
+	#define MAP_ANON        MAP_ANONYMOUS
 
 #endif
 
