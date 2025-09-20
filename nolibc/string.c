@@ -1,4 +1,4 @@
-#include "headers/nlc.h"
+#include "public/nlc_types.h"
 
 u64 StrLen(const s8* s) {
 	u64 n = 0;

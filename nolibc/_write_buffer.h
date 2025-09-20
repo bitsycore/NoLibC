@@ -1,9 +1,9 @@
 #ifndef NOLIBC_WRITER_BUFFER_H
 #define NOLIBC_WRITER_BUFFER_H
 
-#include "headers/nlc.h"
+#include "public/nlc.h"
 
-#define OUTBUF_SIZE 2048
+#define OUTBUF_SIZE 1024
 
 typedef struct WriteBuffer {
     s8 data[OUTBUF_SIZE];

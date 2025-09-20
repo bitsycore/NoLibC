@@ -46,6 +46,37 @@ void IntegerToString(const s64 val, s8* out, u64* out_len) {
 	}
 }
 
+void FloatToString(f64 value, s8* out, u64* outLen, const u32 precision) {
+	u64 pos = 0;
+
+	// handle sign
+	if (value < 0) {
+		out[pos++] = '-';
+		value = -value;
+	}
+
+	// integer part
+	const u64 integerPart = (u64)value;
+	u64 integerPartLen;
+	UnsignedToString(integerPart, 10, out + pos, &integerPartLen, 0);
+	pos += integerPartLen;
+
+	// decimal point
+	out[pos++] = '.';
+
+	// fractional part
+	f64 frac = value - (f64)integerPart;
+	for (u32 i = 0; i < precision; i++) {
+		frac *= 10.0;
+		const u32 digit = (u32)frac;
+		if (digit >= 10) break;
+		out[pos++] = (s8)('0' + digit);
+		frac -= digit;
+	}
+
+	*outLen = pos;
+}
+
 // ============================
 // MARK: Format
 // ============================
@@ -53,9 +84,6 @@ void IntegerToString(const s64 val, s8* out, u64* out_len) {
 static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* b) {
 	const s8* p = fmt;
 	s8 numBuff[64];
-
-	static s8 PERCENT = '%';
-	static s8 QUESTION = '?';
 
 	while (*p) {
 		if (*p != '%') {
@@ -68,7 +96,7 @@ static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* 
 		// handle %
 		p++; // skip '%'
 		if (*p == '%') {
-			WriteBufferPutc(b, PERCENT);
+			WriteBufferPutc(b, '%');
 			p++;
 			continue;
 		}
@@ -82,7 +110,11 @@ static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* 
 
 		switch (*p) {
 		case 'f': {
-			SysExit(55);
+			const uPtr fptr = __builtin_va_arg(ap, uPtr);
+			const f64 f = *(f64*)fptr;
+			u64 len = 0;
+			FloatToString(f, numBuff, &len, width == 0 ? 6 : width);
+			WriteBufferPuts(b, numBuff, len);
 			break;
 		}
 		case 's': {
@@ -118,9 +150,9 @@ static void WriteBufferFmtVar(const s8* fmt, __builtin_va_list ap, WriteBuffer* 
 			break;
 		}
 		default:
-			WriteBufferPutc(b, PERCENT);
+			WriteBufferPutc(b, '%');
 			if (*p) WriteBufferPutc(b, *p);
-			else WriteBufferPutc(b, QUESTION);
+			else WriteBufferPutc(b, '?');
 			break;
 		}
 		if (*p) p++;

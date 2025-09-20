@@ -18,6 +18,22 @@
 void SysExit(s64 status);
 
 // ============================
+// MEMORY
+// ============================
+
+void* Malloc(uSize size);
+void Free(void* ptr, uPtr size);
+void Memset(void* ptr, u8 val, uSize size);
+
+typedef struct Arena Arena;
+Arena* ArenaNew(u64 size);
+void* ArenaAlloc(Arena* arena, uSize size);
+void ArenaReset(Arena* arena);
+void ArenaFree(Arena* arena);
+u64 ArenaRemaining(const Arena* arena);
+u64 ArenaSize(const Arena* arena);
+
+// ============================
 // STR
 // ============================
 

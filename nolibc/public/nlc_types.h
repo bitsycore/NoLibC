@@ -13,6 +13,8 @@ typedef unsigned int		uPtr;
 typedef int					sPtr;
 #endif
 
+typedef uPtr uSize;
+typedef sPtr sSize;
 typedef unsigned int u32;
 typedef int s32;
 typedef unsigned short u16;

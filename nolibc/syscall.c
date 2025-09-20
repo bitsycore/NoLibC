@@ -1,4 +1,3 @@
-#include "headers/nlc.h"
 #include "_syscall.h"
 
 sPtr SysCall(
@@ -131,18 +130,11 @@ sPtr SysCall(
 // ============================
 // System
 // ============================
+
 sPtr SysWrite(const u64 fd, const u8* buf, const u64 count) {
 	return SysCall(SYS_write, (uPtr)fd, (uPtr)buf, (uPtr)count, 0, 0, 0);
 }
 
-
 void SysExit(const s64 status) {
 	SysCall(SYS_exit, status, 0, 0, 0, 0, 0);
-}
-
-int main();
-
-void _start() {
-	const int ret = main();
-	SysExit(ret);
 }
