@@ -37,20 +37,6 @@ int main() {
 
 	// --------------------------------------
 
-	Arena* arenas[100];
-	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
-		arenas[i] = ArenaNew(16 * 1024);
-		u8* buffer = ArenaAlloc(arenas[i], 1333);
-		Memset(buffer, 5, 1333);
-		buffer = ArenaAlloc(arenas[i], 1333);
-		Memset(buffer, 7, 1333);
-	}
-	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
-		ArenaFree(arenas[i]);
-	}
-
-	// --------------------------------------
-
 	Print("[TEST]: Print\n");
 	PrintLen("[TEST]: PrintLen\n", StrLenK("[TEST]: PrintLen\n"));
 	PrintK("[TEST]: PrintK\n");
@@ -85,6 +71,22 @@ int main() {
 	PrintFmt("[TEST]: StrLen=%d\n", StrLen(s3));
 	PrintFmt("[TEST]: StrLenK=%d\n", StrLenK(s3));
 	PrintFmt("[TEST]: PrintFmt with ptr, float=%9f\n", &f4);
+
+	// --------------------------------------
+
+	Arena* arenas[100];
+	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
+		arenas[i] = ArenaNew(16 * 1024);
+		u8* buffer = ArenaAlloc(arenas[i], 1333);
+		Memset(buffer, 5, 1333);
+		buffer = ArenaAlloc(arenas[i], 1333);
+		Memset(buffer, 7, 1333);
+	}
+	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
+		ArenaFree(arenas[i]);
+	}
+
+	PrintLnK("[TEST]: ArenaAlloc");
 
 	return 0;
 }

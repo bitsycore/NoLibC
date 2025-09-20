@@ -11,15 +11,31 @@
 #define SEEK_CUR		1
 #define SEEK_END		2
 
-#define PROT_NONE		0x0
-#define PROT_READ		0x1
-#define PROT_WRITE		0x2
-#define PROT_EXEC		0x4
+#if defined(__APPLE__) && defined(__MACH__)
 
-#define MAP_SHARED		0x01
-#define MAP_PRIVATE		0x02
-#define MAP_FIXED		0x10
-#define MAP_ANONYMOUS	0x20
+	#define PROT_NONE		0x0
+	#define PROT_READ		0x1
+	#define PROT_WRITE		0x2
+	#define PROT_EXEC		0x4
+
+	#define MAP_PRIVATE     0x0002
+	#define MAP_ANON        0x1000
+	#define MAP_ANONYMOUS   MAP_ANON
+
+#elif defined(__linux__)
+
+	#define PROT_NONE		0x0
+	#define PROT_READ		0x1
+	#define PROT_WRITE		0x2
+	#define PROT_EXEC		0x4
+
+	#define MAP_SHARED		0x01
+	#define MAP_PRIVATE     0x02
+	#define MAP_FIXED		0x10
+	#define MAP_ANONYMOUS   0x20
+	#define MAP_ANON		MAP_ANONYMOUS
+
+#endif
 
 // ============================
 // SYSCALL NUMBERS
@@ -96,16 +112,18 @@
 
 	# if defined(__x86_64__) || defined(__aarch64__)
 
-		# define SYS_read      3
-		# define SYS_write     4
-		# define SYS_open      5
-		# define SYS_close     6
-		# define SYS_exit      1
-		# define SYS_fstat     189
-		# define SYS_stat      188
-		# define SYS_lseek     199
-		# define SYS_pread     173
-		# define SYS_pwrite    174
+		# define SYS_read		3
+		# define SYS_write		4
+		# define SYS_open		5
+		# define SYS_close		6
+		# define SYS_exit		1
+		# define SYS_fstat		189
+		# define SYS_stat		188
+		# define SYS_lseek		199
+		# define SYS_pread		173
+		# define SYS_pwrite		174
+		# define SYS_munmap		73
+		# define SYS_mmap		197
 
 	# else
 
