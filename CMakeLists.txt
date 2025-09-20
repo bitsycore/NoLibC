@@ -30,7 +30,7 @@ set(COMMON_COMPILE_OPTIONS
 add_library(NoLibC
         nolibc/public/nlc.h
         nolibc/string.c
-        nolibc/syscall.c
+        nolibc/system.c
         nolibc/print.c
         nolibc/private/syscall.h
         nolibc/intrinsic.c
@@ -41,7 +41,7 @@ add_library(NoLibC
         nolibc/private/entry.h
         nolibc/entry.c
         nolibc/arena.c
-        nolibc/system.c
+        nolibc/file.c
 )
 
 target_include_directories(
