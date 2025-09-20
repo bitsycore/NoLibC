@@ -1,5 +1,5 @@
-#include "_syscall.h"
-#include "_write_buffer.h"
+#include "private/syscall.h"
+#include "private/write_buffer.h"
 
 // ============================
 // MARK: Integer to string

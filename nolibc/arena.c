@@ -4,7 +4,7 @@
 typedef struct Arena {
 	uSize size;
 	uSize used;
-	u8 const data[];
+	u8 data[];
 } Arena;
 
 Arena* ArenaNew(const uSize size) {

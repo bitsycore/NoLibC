@@ -1,6 +1,6 @@
-#include "_write_buffer.h"
+#include "private/write_buffer.h"
 
-#include "_syscall.h"
+#include "private/syscall.h"
 
 // ============================
 // MARK: Buffer

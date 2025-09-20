@@ -1,15 +1,44 @@
 #include "public/nlc.h"
 
-#if defined(__clang__) && !defined(__APPLE__)
+#if defined(__clang__)
 
 __attribute__((used))
 void* memset(void* ptr, const int value, uSize num)  {
-    unsigned char* p = ptr;
-    while (num--) {
+    u8* p = ptr;
+
+    // Fill the first bytes until p is aligned to uSize
+    const uSize align = sizeof(uSize);
+    while (num && ((uPtr)p % align)) {
         *p++ = (unsigned char)value;
+        --num;
     }
+
+    // Prepare chunk
+    uSize val = (u8)value;
+    val |= val << 8;
+    val |= val << 16;
+#if __LP64__
+    val |= val << 32; // 64-bit
+#endif
+
+    // Fill memory in chunks
+    uSize* p64 = (uSize*)p;
+    while (num >= sizeof(uSize)) {
+        *p64++ = val;
+        num -= sizeof(uSize);
+    }
+
+    // Fill remaining bytes
+    p = (u8*)p64;
+    while (num--) {
+        *p++ = (u8)value;
+    }
+
     return ptr;
 }
+#endif
+
+#if defined(__clang__) && !defined(__APPLE__)
 
 __attribute__((used))
 void* memmove(void *dst, const void *src, uSize n) {
@@ -59,11 +88,8 @@ void* memmove(void *dst, const void *src, uSize n) {
 #elif defined(__APPLE__)
 
 __attribute__((used))
-void bzero(void *s, uPtr n) {
-    unsigned char *p = s;
-    while (n--) {
-        *p++ = 0;
-    }
+void bzero(void *s, uSize n) {
+    memset(s, 0, n);
 }
 
 #endif

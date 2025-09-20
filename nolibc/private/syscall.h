@@ -1,7 +1,7 @@
 #ifndef NOLIBC_SYSCALL_H
 #define NOLIBC_SYSCALL_H
 
-#include "public/nlc_types.h"
+#include "../public/nlc_types.h"
 
 // ============================
 // FLAGS
@@ -92,6 +92,7 @@ sPtr SysCall(
 	uPtr f
 );
 
+void SysExit(s64 status);
 sPtr SysWrite(u64 fd, const u8* buf, u64 count);
 
 

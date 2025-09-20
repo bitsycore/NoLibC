@@ -32,15 +32,16 @@ add_library(NoLibC
         nolibc/string.c
         nolibc/syscall.c
         nolibc/print.c
-        nolibc/_syscall.h
+        nolibc/private/syscall.h
         nolibc/intrinsic.c
         nolibc/write_buffer.c
-        nolibc/_write_buffer.h
+        nolibc/private/write_buffer.h
         nolibc/public/nlc_types.h
         nolibc/memory.c
-        nolibc/_entry.h
+        nolibc/private/entry.h
         nolibc/entry.c
         nolibc/arena.c
+        nolibc/system.c
 )
 
 target_include_directories(

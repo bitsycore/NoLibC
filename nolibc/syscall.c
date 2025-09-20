@@ -1,4 +1,4 @@
-#include "_syscall.h"
+#include "private/syscall.h"
 
 sPtr SysCall(
     sPtr n,

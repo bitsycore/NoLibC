@@ -1,5 +1,6 @@
-#include "nlc.h"
-#include "_entry.h"
+#include "private/entry.h"
+
+#include "private/syscall.h"
 
 // ============================
 // MARK: Entry point

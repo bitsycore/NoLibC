@@ -12,13 +12,13 @@
 #define FILE_STDERR 2
 
 // ============================
-// SYSTEM
+// system.c
 // ============================
 
-void SysExit(s64 status);
+void Exit(s64 status);
 
 // ============================
-// MEMORY
+// memory.c
 // ============================
 
 void* MapMem(uSize size);
@@ -34,14 +34,14 @@ u64 ArenaRemaining(const Arena* arena);
 u64 ArenaSize(const Arena* arena);
 
 // ============================
-// STR
+// string.c
 // ============================
 
 u64 StrLen(const s8* s);
 #define StrLenK(_s_) ( ( sizeof((_s_)) / sizeof((_s_)[0]) ) - 1 )
 
 // ============================
-// PRINT
+// print.c
 // ============================
 
 // ==== Print =================

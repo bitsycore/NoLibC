@@ -1,8 +1,6 @@
-
-
 #include "nlc_types.h"
-#include "_syscall.h"
-#include "_entry.h"
+#include "private/entry.h"
+#include "private/syscall.h"
 
 #define AT_NULL     0
 #define AT_PAGESZ   6

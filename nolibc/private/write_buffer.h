@@ -1,7 +1,7 @@
 #ifndef NOLIBC_WRITER_BUFFER_H
 #define NOLIBC_WRITER_BUFFER_H
 
-#include "public/nlc.h"
+#include "../public/nlc.h"
 
 #define OUTBUF_SIZE 1024
 
