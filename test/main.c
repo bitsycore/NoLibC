@@ -1,16 +1,16 @@
 #include <nlc.h>
 
 void fileWriteTest() {
-	#define FILENAME "testfile.txt"
-	#define MESSAGE "[TEST]: FileOpen, FileWrite, FileClose, FileOpen, FileRead\n"
-	u8 buffer[128];
+	const Str filename = StrConst("testfile.txt");
+	const Str message = StrConst("[TEST]: FileOpen, FileWrite, FileClose, FileOpen, FileRead\n");
+	u8 buffer[message.len];
 
-	s64 fd = FileOpen(FILENAME, O_WRONLY | O_CREAT | O_TRUNC);
+	s64 fd = FileOpen(filename.str, O_WRONLY | O_CREAT | O_TRUNC);
 	if (fd < 0) Exit(1);
-	FileWrite(fd, (u8*)MESSAGE, StrLenK(MESSAGE));
+	FileWrite(fd, (u8*)message.str, message.len);
 	FileClose(fd);
 
-	fd = FileOpen(FILENAME, O_RDONLY);
+	fd = FileOpen(filename.str, O_RDONLY);
 	if (fd < 0) Exit(1);
 	const s64 result = FileSize(fd);
 	PrintFmt("[TEST]: FileSize=%d\n", result);
@@ -18,8 +18,6 @@ void fileWriteTest() {
 	FileClose(fd);
 
 	PrintLen((s8*)buffer, n);
-	#undef FILENAME
-	#undef MESSAGE
 }
 
 int main() {

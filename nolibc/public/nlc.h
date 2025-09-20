@@ -70,6 +70,8 @@ u64 ArenaSize(const Arena* arena);
 // string.c
 // ============================
 
+#define StrConst(_str_) (Str) { .str=_str_, .len=StrLenK(_str_) }
+
 u64 StrLen(const s8* s);
 #define StrLenK(_s_) ( ( sizeof((_s_)) / sizeof((_s_)[0]) ) - 1 )
 

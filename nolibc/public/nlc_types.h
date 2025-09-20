@@ -29,4 +29,9 @@ typedef double f64;
 #define true ((_Bool)(1))
 #define false ((bool)(0))
 
+typedef struct {
+    const s8* str;
+    const uSize len;
+} Str;
+
 #endif //NOLIBC_NLC_TYPES_H
