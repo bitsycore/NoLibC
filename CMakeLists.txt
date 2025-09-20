@@ -64,17 +64,19 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     # RelWithDebInfo: optimize, keep debug symbols, remove unused code
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -flto -ffunction-sections -fdata-sections -g -DNDEBUG")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto -Wl")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 else()
     # Release or any other build: max optimization, remove debug info and unused code
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -flto -ffunction-sections -fdata-sections -DNDEBUG")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto -Wl")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
 
 if(APPLE)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-u,_memset")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-u,_memset,_memcpy")
 else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-u,memset,--gc-sections -Wl")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-u,memset,-u,memcpy,--gc-sections")
 endif()
 
+target_compile_options(NoLibC_Test PUBLIC ${COMMON_COMPILE_OPTIONS})
+target_link_options(NoLibC_Test PUBLIC ${COMMON_LINK_OPTIONS})
 target_link_libraries(NoLibC_Test NoLibC)

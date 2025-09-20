@@ -1,36 +1,28 @@
 #include <nlc.h>
 
 void fileWriteTest() {
-	const s8 filename[] = "testfile.txt";
-	const s8 message[] = "[TEST]: FileOpen, FileWrite, FileClose, FileOpen, FileRead\n";
-	u8 buffer[1024];
+	#define FILENAME "testfile.txt"
+	#define MESSAGE "[TEST]: FileOpen, FileWrite, FileClose, FileOpen, FileRead\n"
+	u8 buffer[128];
 
-	// Open file for writing (create/truncate)
-	s64 fd = FileOpen(filename, O_WRONLY | O_CREAT | O_TRUNC);
+	s64 fd = FileOpen(FILENAME, O_WRONLY | O_CREAT | O_TRUNC);
 	if (fd < 0) Exit(1);
-
-	// Write to file
-	FileWrite(fd, (u8*)message, sizeof(message) / sizeof(message[0]) - 1);
+	FileWrite(fd, (u8*)MESSAGE, StrLenK(MESSAGE));
 	FileClose(fd);
 
-	// Open file for reading
-	fd = FileOpen(filename, O_RDONLY);
+	fd = FileOpen(FILENAME, O_RDONLY);
 	if (fd < 0) Exit(1);
-
 	const s64 result = FileSize(fd);
 	PrintFmt("[TEST]: FileSize=%d\n", result);
-
-	// Read from file
 	const s64 n = FileRead(fd, buffer, sizeof(buffer));
 	FileClose(fd);
 
-
-	// Write read data to stdout
 	PrintLen((s8*)buffer, n);
+	#undef FILENAME
+	#undef MESSAGE
 }
 
 int main() {
-
 	// --------------------------------------
 
 	fileWriteTest();
