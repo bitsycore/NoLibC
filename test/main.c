@@ -77,16 +77,24 @@ int main() {
 	Arena* arenas[100];
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
 		arenas[i] = ArenaNew(16 * 1024);
-		u8* buffer = ArenaAlloc(arenas[i], 1333);
-		Memset(buffer, 5, 1333);
-		buffer = ArenaAlloc(arenas[i], 1333);
-		Memset(buffer, 7, 1333);
+		if (i == 0) {
+			const u64 remaining = ArenaRemaining(arenas[i]);
+			PrintFmt("[TEST]: ArenaRemaining Before remaining=%d\n", remaining);
+		}
+		u8* buffer = ArenaAlloc(arenas[i], 1024);
+		Memset(buffer, 5, 1024);
+		buffer = ArenaAlloc(arenas[i], 1024);
+		if (i == 0) {
+			const u64 remaining = ArenaRemaining(arenas[i]);
+			PrintFmt("[TEST]: ArenaRemaining After remaining=%d\n", remaining);
+		}
+		Memset(buffer, 7, 1024);
 	}
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
 		ArenaFree(arenas[i]);
 	}
 
-	PrintLnK("[TEST]: ArenaAlloc");
+	PrintLnK("[TEST]: ArenaNew, ArenaAlloc, ArenaReset, ArenaRemaining, ArenaFree");
 
 	return 0;
 }
