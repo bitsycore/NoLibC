@@ -4,13 +4,17 @@ int main() {
 
 	// --------------------------------------
 
-	Arena* test = ArenaNew(4096);
-	u8* buffer = ArenaAlloc(test, 1024);
-	Memset(buffer, 5, 4096);
-	ArenaReset(test);
-	buffer = ArenaAlloc(test, 1024);
-	Memset(buffer, 7, 4096);
-	ArenaFree(test);
+	Arena* arenas[100];
+	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
+		arenas[i] = ArenaNew(16 * 1024);
+		u8* buffer = ArenaAlloc(arenas[i], 1333);
+		Memset(buffer, 5, 1333);
+		buffer = ArenaAlloc(arenas[i], 1333);
+		Memset(buffer, 7, 1333);
+	}
+	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
+		ArenaFree(arenas[i]);
+	}
 
 	// --------------------------------------
 

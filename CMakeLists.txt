@@ -59,4 +59,15 @@ add_executable(NoLibC_Test
         test/main.c
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    # RelWithDebInfo: optimize, keep debug symbols, remove unused code
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -flto -ffunction-sections -fdata-sections -g -DNDEBUG")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto -Wl,--gc-sections -Wl,-u,memset")
+else()
+    # Release or any other build: max optimization, remove debug info and unused code
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -flto -ffunction-sections -fdata-sections -DNDEBUG")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto -Wl,--gc-sections -Wl,-u,memset -s")
+endif()
+
 target_link_libraries(NoLibC_Test NoLibC)

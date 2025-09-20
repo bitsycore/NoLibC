@@ -5,13 +5,14 @@
 // MARK: Entry point
 // ============================
 
-extern int main(int argc, char** argv, char** envp);
-
-volatile uSize gArgc;
-volatile s8** gArgv;
+__attribute__((used)) volatile uSize gArgc;
+__attribute__((used)) volatile s8** gArgv;
 volatile s8** gEnvp;
 volatile uPtr* gAuxv;
 
+extern int main(int argc, char** argv, char** envp);
+
+__attribute__((used))
 void StartC(long argc, char** argv) {
 	argc = gArgc;
 	argv = (char**)gArgv;

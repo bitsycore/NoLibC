@@ -2,7 +2,8 @@
 
 #if defined(__clang__) && !defined(__APPLE__)
 
-void* memset(void* ptr, const int value, uSize num) {
+__attribute__((used))
+void* memset(void* ptr, const int value, uSize num)  {
     unsigned char* p = ptr;
     while (num--) {
         *p++ = (unsigned char)value;
@@ -10,6 +11,7 @@ void* memset(void* ptr, const int value, uSize num) {
     return ptr;
 }
 
+__attribute__((used))
 void* memmove(void *dst, const void *src, uSize n) {
     if (n == 0 || dst == src) return dst;
 
@@ -56,6 +58,7 @@ void* memmove(void *dst, const void *src, uSize n) {
 
 #elif defined(__APPLE__)
 
+__attribute__((used))
 void bzero(void *s, uPtr n) {
     unsigned char *p = s;
     while (n--) {
