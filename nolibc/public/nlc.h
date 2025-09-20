@@ -21,8 +21,8 @@ void SysExit(s64 status);
 // MEMORY
 // ============================
 
-void* Malloc(uSize size);
-void Free(void* ptr, uPtr size);
+void* MapMem(uSize size);
+void UnmapMem(void* ptr, uPtr size);
 void Memset(void* ptr, u8 val, uSize size);
 
 typedef struct Arena Arena;

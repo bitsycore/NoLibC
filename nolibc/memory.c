@@ -28,7 +28,7 @@ uSize GetPageSize() {
 #endif
 }
 
-void* Malloc(const uSize size) {
+void* MapMem(const uSize size) {
 	const uSize pageSize = GetPageSize();
 	const uSize aligned = (size + pageSize - 1) & ~(pageSize - 1);
 
@@ -45,7 +45,7 @@ void* Malloc(const uSize size) {
 	return p == (void*)-1 ? null : p;
 }
 
-void Free(void *ptr, const uPtr size) {
+void UnmapMem(void *ptr, const uPtr size) {
 	const uSize pageSize = GetPageSize();
 	const uSize aligned = size + pageSize - 1 & ~(pageSize - 1);
 	SysCall(SYS_munmap, (uPtr)ptr, aligned, 0, 0, 0, 0);

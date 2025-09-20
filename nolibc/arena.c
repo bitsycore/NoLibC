@@ -9,7 +9,7 @@ typedef struct Arena {
 
 Arena* ArenaNew(const uSize size) {
 	const uSize totalSize = sizeof(Arena) + size;
-	Arena* arena = Malloc(totalSize);
+	Arena* arena = MapMem(totalSize);
 	Memset(arena, 0, totalSize);
 	arena->size = size;
 	return arena;
@@ -27,7 +27,7 @@ void ArenaReset(Arena* arena) {
 }
 
 void ArenaFree(Arena* arena) {
-	Free(arena, sizeof(Arena) + arena->size);
+	UnmapMem(arena, sizeof(Arena) + arena->size);
 }
 
 u64 ArenaRemaining(const Arena* arena) {
