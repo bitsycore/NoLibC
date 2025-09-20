@@ -10,8 +10,9 @@ __attribute__((used)) volatile s8** gArgv;
 volatile s8** gEnvp;
 volatile uPtr* gAuxv;
 
-extern int main(int argc, char** argv, char** envp);
+extern int main(int argc, char** argv);
 
+#if defined(__linux__)
 __attribute__((used))
 void StartC(long argc, char** argv) {
 	argc = gArgc;
@@ -25,17 +26,82 @@ void StartC(long argc, char** argv) {
 	}
 	gAuxv = (uPtr*)(envp + 1);
 
-	const int status = main((int)argc, argv, (char**)gEnvp);
+	const int status = main((int)argc, argv);
 	SysExit(status);
 }
+#elif defined(__APPLE__)
+__attribute__((used))
+void StartC(long argc, char** argv) {
+	argc = gArgc;
+	argv = (char**)gArgv;
+
+	// TODO: ENVP
+
+	const int status = main((int)argc, argv);
+	SysExit(status);
+}
+#endif
 
 void __attribute__((naked)) _start() {
+#if defined(__APPLE__)
 #if defined(__x86_64__)
-	// rsp[0]       : argc
-	// rsp[8]       : argv[0]
-	// rsp[16]      : argv[1]
-	// rsp[8*argc]  : argv[argc] (NULL)
-	// rsp[8*argc+8]: envp[0]
+	asm volatile (
+		"pop %rdi\n" /* argc */
+		"mov %rsp, %rsi\n" /* argv */
+		"mov %rdi, gArgc(%rip)\n"
+		"mov %rsi, gArgv(%rip)\n"
+		"call StartC\n"
+		"mov %eax, %edi\n" /* return code */
+		"mov $0x2000001, %rax\n" /* sys_exit */
+		"syscall\n"
+	);
+#elif defined(__i386__)
+	asm volatile (
+		"pop %eax\n" /* argc */
+		"mov %esp, %ebx\n" /* argv */
+		"mov %eax, gArgc\n"
+		"mov %ebx, gArgv\n"
+		"push %eax\n"
+		"push %ebx\n"
+		"call StartC\n"
+		"mov %eax, %ebx\n" /* return code */
+		"mov $1, %eax\n" /* sys_exit */
+		"int $0x80\n"
+	);
+#elif defined(__aarch64__)
+	asm volatile (
+		"ldr x0, [sp]\n" /* argc */
+		"add x1, sp, #8\n" /* argv */
+		"str x0, %[argc]\n"
+		"str x1, %[argv]\n"
+		"bl StartC\n"
+		"mov x0, x0\n" /* return code */
+		"mov x16, #1\n" /* sys_exit */
+		"svc #0\n"
+		:
+		[argc] "=m" (gArgc),
+		[argv] "=m" (gArgv)
+		:
+		: "x0","x1","x16","x30"
+	);
+#elif defined(__arm__)
+	asm volatile (
+		"ldr r0, [sp]\n" /* argc */
+		"add r1, sp, #4\n" /* argv */
+		"ldr r2, =gArgc\n"
+		"str r0, [r2]\n"
+		"ldr r2, =gArgv\n"
+		"str r1, [r2]\n"
+		"bl StartC\n"
+		"mov r0, r0\n" /* return code */
+		"mov r7, #1\n" /* sys_exit */
+		"svc 0\n"
+	);
+#else
+#error "Unsupported architecture"
+#endif
+#elif defined(__linux__)
+#if defined(__x86_64__)
 	asm volatile (
 		"pop %rdi\n" // Pop argc into the first argument register (%rdi)
 		"mov %rsp, %rsi\n" // Move argv pointer (current %rsp) into the second argument register (%rsi)
@@ -44,9 +110,6 @@ void __attribute__((naked)) _start() {
 		"call StartC\n" // Call StartC(argc, argv)
 	);
 #elif defined(__i386__)
-	// esp[0]       : argc
-	// esp[4]       : argv[0]
-	// esp[4*argc+4]: envp[0]
 	asm volatile (
 		"pop %eax\n" // Pop argc into eax
 		"mov %esp, %ebx\n" // Move argv pointer into ebx
@@ -57,11 +120,6 @@ void __attribute__((naked)) _start() {
 		"call StartC\n" // Call StartC(argc, argv)
 	);
 #elif defined(__aarch64__)
-	// For AArch64, argc, argv are passed in registers x0 and x1 by some loaders,
-	// but the kernel places them on the stack. Read from the stack for consistency.
-	// sp[0]: argc
-	// sp[8]: argv[0]
-	// ...
 	asm volatile (
 		"ldr x0, [sp]\n" // Load argc from stack into x0
 		"add x1, sp, #8\n" // Calculate the argv address (sp + 8) and put it in x1
@@ -75,10 +133,6 @@ void __attribute__((naked)) _start() {
 		: "x0", "x1", "x2", "x30" // x30 is the link register
 	);
 #elif defined(__arm__)
-	// For ARM 32-bit, similar to AArch64, the stack contains the information.
-	// sp[0]: argc
-	// sp[4]: argv[0]
-	// ...
 	asm volatile (
 		"ldr r0, [sp]\n" // Load argc from stack into r0
 		"add r1, sp, #4\n" // Calculate argv address (sp + 4) into r1
@@ -88,5 +142,8 @@ void __attribute__((naked)) _start() {
 		"str r1, [r2]\n" // Save argv
 		"bl StartC\n" // Branch with link to StartC
 	);
+#else
+#error "Unsupported architecture"
+#endif
 #endif
 }
