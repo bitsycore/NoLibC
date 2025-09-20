@@ -38,8 +38,8 @@ add_library(NoLibC
         nolibc/_write_buffer.h
         nolibc/public/nlc_types.h
         nolibc/memory.c
-        nolibc/_system.h
-        nolibc/system.c
+        nolibc/_entry.h
+        nolibc/entry.c
         nolibc/arena.c
 )
 

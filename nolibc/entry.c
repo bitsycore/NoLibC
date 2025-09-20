@@ -1,5 +1,5 @@
 #include "nlc.h"
-#include "_system.h"
+#include "_entry.h"
 
 // ============================
 // MARK: Entry point

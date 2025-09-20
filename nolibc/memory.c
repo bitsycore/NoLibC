@@ -2,7 +2,7 @@
 
 #include "nlc_types.h"
 #include "_syscall.h"
-#include "_system.h"
+#include "_entry.h"
 
 #define AT_NULL     0
 #define AT_PAGESZ   6
