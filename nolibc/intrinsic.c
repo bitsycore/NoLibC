@@ -1,6 +1,6 @@
 #include "public/nlc.h"
 
-__attribute__((used))
+NLC_ATTR_USED
 void* memset(void* ptr, const int value, uSize num)  {
     u8* p = ptr;
 
@@ -37,7 +37,7 @@ void* memset(void* ptr, const int value, uSize num)  {
 
 #if defined(__clang__) && !defined(__APPLE__)
 
-__attribute__((used))
+NLC_ATTR_USED
 void* memmove(void *dst, const void *src, uSize n) {
     if (n == 0 || dst == src) return dst;
 
@@ -84,7 +84,7 @@ void* memmove(void *dst, const void *src, uSize n) {
 
 #elif defined(__APPLE__)
 
-__attribute__((used))
+NLC_ATTR_USED
 void bzero(void *s, uSize n) {
     memset(s, 0, n);
 }

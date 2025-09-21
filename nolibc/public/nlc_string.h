@@ -4,8 +4,8 @@
 #include "nlc_types.h"
 
 typedef struct {
-	const cStr str;
-	const uSize len;
+	cStr str;
+	uSize len;
 } Str;
 
 #define StrConst(_str_) (Str) { .str=_str_, .len=cStrLenK(_str_) }

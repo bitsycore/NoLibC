@@ -1,21 +1,21 @@
 #include "private/entry.h"
 
 #include "private/system.h"
-#include "public/nlc_string.h"
+#include "public/nlc_system.h"
 
 // ============================
 // MARK: Entry point
 // ============================
 
-__attribute__((used)) volatile uSize gArgc;
-__attribute__((used)) volatile cStr* gArgv;
+NLC_ATTR_USED volatile uSize gArgc;
+NLC_ATTR_USED volatile cStr* gArgv;
 volatile cStr* gEnvp;
 volatile uPtr* gAuxv;
 
 extern int main(int argc, char** argv);
 
 #if defined(__linux__)
-__attribute__((used))
+NLC_ATTR_USED
 void StartC(long argc, char** argv) {
 	argc = (long)gArgc;
 	argv = (char**)gArgv;
@@ -32,7 +32,7 @@ void StartC(long argc, char** argv) {
 	SysExit(status);
 }
 #elif defined(__APPLE__)
-__attribute__((used))
+NLC_ATTR_USED
 void StartC(long argc, char** argv) {
 	argc = gArgc;
 	argv = (char**)gArgv;
@@ -44,7 +44,8 @@ void StartC(long argc, char** argv) {
 }
 #endif
 
-void __attribute__((naked)) _start() {
+NLC_ATTR_NAKED
+void _start() { // NOLINT(*-reserved-identifier)
 #if defined(__APPLE__)
 #if defined(__x86_64__)
 	asm volatile (

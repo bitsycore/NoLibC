@@ -1,6 +1,7 @@
 #ifndef NOLIBC_SYSCALL_H
 #define NOLIBC_SYSCALL_H
 
+#include "../public/nlc_system.h"
 #include "../public/nlc_types.h"
 
 // ============================
@@ -146,7 +147,7 @@ sPtr SysOpen(const char* pathname, u64 flags, u64 mode);
 sPtr SysClose(u64 fd);
 sPtr SysRead(u64 fd, u8* buf, u64 count);
 sPtr SysWrite(u64 fd, const u8* buf, u64 count);
-__attribute__((noreturn))
+NLC_ATTR_NO_RETURN
 void SysExit(s64 status);
 sPtr SysLSeek(u64 fd, u64 offset, u64 whence);
 sPtr SysFStat(u64 fd, u8* buf);
