@@ -82,6 +82,11 @@ void* memmove(void *dst, const void *src, uSize n) {
     return dst;
 }
 
+NLC_ATTR_USED
+void* memcpy(void* dest, const void* src, uSize n) {
+	return memmove(dest, src, n);
+}
+
 #elif defined(__APPLE__)
 
 NLC_ATTR_USED

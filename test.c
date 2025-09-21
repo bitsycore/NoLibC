@@ -1,7 +1,10 @@
 #include <nlc.h>
 
+#include "nolibc/private/system.h"
+
 #define TPRE AC_GREEN "[TEST]" AC_RESET ": "
 
+NLC_ATTR_NO_INLINE
 void testColor() {
 
 	PrintLnK(TPRE "ANSI Color");
@@ -154,6 +157,7 @@ void testColor() {
 	PrintNewLine();
 }
 
+NLC_ATTR_NO_INLINE
 void testFileWrite() {
 	const Str filename = StrConst("testfile.txt");
 	const Str message = StrConst(TPRE "FileOpen, FileWrite, FileClose, FileOpen, FileRead\n");
@@ -174,6 +178,7 @@ void testFileWrite() {
 	PrintLen((cStr)buffer, n);
 }
 
+NLC_ATTR_NO_INLINE
 void testPrintAndFormat(void) {
 	Print(TPRE "Print\n");
 	const Str printLenStr = StrConst(TPRE "PrintLen\n");
@@ -189,6 +194,7 @@ void testPrintAndFormat(void) {
 	FileWriteFmt(FILE_STDOUT, TPRE "PrintFmtFile int=%d, string=%s\n", 512, "\"Hahaha\"");
 }
 
+NLC_ATTR_NO_INLINE
 void testStrings(void) {
 	const s8 s3[] = "1234567";
 	const f64 f4 = 987.567123456789;
@@ -197,6 +203,7 @@ void testStrings(void) {
 	PrintFmt(TPRE "PrintFmt with ptr, float=%9f\n", &f4);
 }
 
+NLC_ATTR_NO_INLINE
 void testArena(void) {
 	Arena* arenas[100];
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
@@ -221,10 +228,117 @@ void testArena(void) {
 	PrintLnK(TPRE "ArenaNew, ArenaAlloc, ArenaReset, ArenaRemaining, ArenaFree");
 }
 
+#define TCGETS 0x5401
+#define TCSETS 0x5402
+#define TIOCGWINSZ 0x5413
+
+struct NLC_ATTR_PACKED termios {
+	unsigned int	c_iflag;
+	unsigned int	c_oflag;
+	unsigned int	c_cflag;
+	unsigned int	c_lflag;
+	char			c_line;
+	char			c_cc[32];
+	unsigned int	c_ispeed;
+	unsigned int	c_ospeed;
+};
+
+struct NLC_ATTR_PACKED winsize {
+	unsigned short ws_row;
+	unsigned short ws_col;
+	unsigned short ws_xpixel;
+	unsigned short ws_ypixel;
+};
+
+void terminalSetRawMode(struct termios* orig) {
+	struct termios edited;
+	SysCall(SYS_IOCTL, FILE_STDIN, TCGETS, (uPtr)&*orig, 0, 0, 0);
+	edited = *orig;
+	edited.c_lflag &= ~(0x0002 | 0x0001); // ~ECHO | ~ICANON
+	SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)&edited, 0, 0, 0);
+}
+
+void terminalRestore(struct termios *orig) { SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)orig, 0, 0, 0); }
+
+void FIXMEtestTerminal(void) {
+	struct termios orig;
+	//terminalSetRawMode(&orig);
+
+	struct winsize ws;
+	sPtr result = SysCall(SYS_IOCTL, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
+	const uSize HEIGHT = 30;
+	const uSize WIDTH = 80;
+
+	s8 screen[HEIGHT][WIDTH];
+    uSize x=0, y=0;
+
+    // initialize screen
+    for(uSize i=0;i<HEIGHT;i++)
+        for(uSize j=0;j<WIDTH;j++)
+            screen[i][j]=' ';
+
+    // draw box once
+    FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[2J"));  // clear screen
+    for(int i=-1;i<=HEIGHT;i++){
+        for(int j=-1;j<=WIDTH;j++){
+            if(i==-1 || i==HEIGHT || j==-1 || j==WIDTH) FileWrite(1,(u8*)StrParamLen("#"));
+            else FileWrite(1,(u8*)StrParamLen(" "));
+        }
+        FileWrite(1,(u8*)StrParamLen("\n"));
+    }
+
+    while(1){
+		u8 buf[1];
+		// move cursor
+        FileWriteFmt(FILE_STDOUT, "\033[%d;%dH", y+2, x+2);
+
+        // draw character under cursor
+        FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
+
+        // read input
+        if(FileRead(FILE_STDIN, buf, 1)<=0) continue;
+
+        const s8 c = (s8)buf[0];
+
+        if(c==3) break; // Ctrl-C exit
+		if(c==127||c==8){ // backspace
+			if(x>0) {
+				x--;
+				screen[y][x]=' ';
+				FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
+			}
+		}
+		else if(c>=32 && c<=126){ // printable
+			screen[y][x]=c;
+			if(x<WIDTH-1) x++;
+			FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
+		}
+    	// arrow keys
+		else if(c==27){
+			s8 seq[2];
+			if(FileRead(FILE_STDIN, (u8*)&seq[0], 1)==0) continue;
+			if(FileRead(FILE_STDIN, (u8*)&seq[1], 1)==0) continue;
+			if(seq[0]=='['){
+				if(seq[1]=='A' && y>0) y--;				// up
+				else if(seq[1]=='B' && y<HEIGHT-1) y++;	// down
+				else if(seq[1]=='C' && x<WIDTH-1) x++;	// right
+				else if(seq[1]=='D' && x>0) x--;		// left
+			}
+		}
+	}
+
+	// reset color, show cursor
+    FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[0m\033[?25h"));
+	//terminalRestore(&orig);
+}
+
+NLC_ATTR_NO_INLINE
 int main(const int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
+	FIXMEtestTerminal();
+	//return 0;
 	testColor();
 	testFileWrite();
 	testPrintAndFormat();

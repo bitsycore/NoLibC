@@ -9,7 +9,7 @@ typedef struct {
 } Str;
 
 #define StrConst(_str_) (const Str) { .str=(_str_), .len=cStrLenK((_str_)) }
-
+#define StrParamLen(_str_) (_str_), cStrLenK((_str_))
 u64 cStrLen(const cStr s);
 #define cStrLenK(_s_) ( ( sizeof((_s_)) ) - 1 )
 

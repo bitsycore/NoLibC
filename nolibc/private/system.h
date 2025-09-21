@@ -49,6 +49,7 @@
 		# define SYS_fstat     5
 		# define SYS_lseek     8
 		# define SYS_mmap      9
+		# define SYS_IOCTL     16
 		# define SYS_pread64   17
 		# define SYS_pwrite64  18
 		# define SYS_munmap    11
