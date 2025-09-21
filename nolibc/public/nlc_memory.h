@@ -3,8 +3,8 @@
 
 #include "nlc_types.h"
 
-void* MemoryAlloc(uSize size);
-void MemoryFree(void* ptr, uPtr size);
+void* MemoryPageAlloc(uSize size);
+void MemoryPageFree(void* ptr, uPtr size);
 void MemorySet(void* ptr, u8 val, uSize size);
 
 #endif //NOLIBC_NLC_MEMORY_H

@@ -10,7 +10,7 @@ typedef struct Arena {
 
 Arena* ArenaNew(const uSize size) {
 	const uSize totalSize = sizeof(Arena) + size;
-	Arena* arena = MemoryAlloc(totalSize);
+	Arena* arena = MemoryPageAlloc(totalSize);
 	MemorySet(arena, 0, totalSize);
 	arena->size = size;
 	return arena;
@@ -28,7 +28,7 @@ void ArenaReset(Arena* arena) {
 }
 
 void ArenaFree(Arena* arena) {
-	MemoryFree(arena, sizeof(Arena) + arena->size);
+	MemoryPageFree(arena, sizeof(Arena) + arena->size);
 }
 
 uSize ArenaRemaining(const Arena* arena) {

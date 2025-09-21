@@ -8,7 +8,7 @@
 #define AT_NULL     0
 #define AT_PAGESZ   6
 
-static uSize GetPageSize() {
+uSize MemoryPageSize() {
 	uSize pageSize = 4096;
 #if __linux__
 	static uSize PAGE_SIZE_CALCULATED = 0;
@@ -26,8 +26,8 @@ static uSize GetPageSize() {
 	return pageSize;
 }
 
-void* MemoryAlloc(const uSize size) {
-	const uSize pageSize = GetPageSize();
+void* MemoryPageAlloc(const uSize size) {
+	const uSize pageSize = MemoryPageSize();
 	const uSize aligned = (size + pageSize - 1) & ~(pageSize - 1);
 
 	void* p = (void*)SysCall(
@@ -43,8 +43,8 @@ void* MemoryAlloc(const uSize size) {
 	return p == (void*)-1 ? null : p;
 }
 
-void MemoryFree(void *ptr, const uPtr size) {
-	const uSize pageSize = GetPageSize();
+void MemoryPageFree(void *ptr, const uPtr size) {
+	const uSize pageSize = MemoryPageSize();
 	const uSize aligned = size + pageSize - 1 & ~(pageSize - 1);
 	SysCall(SYS_munmap, (uPtr)ptr, aligned, 0, 0, 0, 0);
 }

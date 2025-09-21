@@ -197,7 +197,7 @@ void testStrings(void) {
 	PrintFmt(TPRE "PrintFmt with ptr, float=%9f\n", &f4);
 }
 
-void testMemory(void) {
+void testArena(void) {
 	Arena* arenas[100];
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
 		arenas[i] = ArenaNew(16 * 1024);
@@ -229,7 +229,7 @@ int main(const int argc, char** argv) {
 	testFileWrite();
 	testPrintAndFormat();
 	testStrings();
-	testMemory();
+	testArena();
 
 	return 0;
 }
