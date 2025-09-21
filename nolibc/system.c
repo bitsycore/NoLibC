@@ -1,4 +1,5 @@
-#include "private/syscall.h"
+#include "private/system.h"
+#include "public/nlc_system.h"
 
 sPtr SysCall(
     sPtr n,
@@ -160,6 +161,6 @@ sPtr SysFStat(const u64 fd, u8* buf) {
 // Public
 // ============================
 
-void Exit(const s64 status) {
+void Exit(const int status) {
   SysExit(status);
 }

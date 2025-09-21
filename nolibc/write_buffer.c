@@ -1,6 +1,6 @@
 #include "private/write_buffer.h"
 
-#include "private/syscall.h"
+#include "private/system.h"
 
 // ============================
 // MARK: Buffer
@@ -18,7 +18,7 @@ void WriteBufferPutc(WriteBuffer* b, const s8 c) {
     b->data[b->len++] = c;
 }
 
-void WriteBufferPuts(WriteBuffer* b, const s8* s, const u64 n) {
+void WriteBufferPuts(WriteBuffer* b, const cStr s, const u64 n) {
     for (u64 i = 0; i < n; i++) {
         WriteBufferPutc(b, s[i]);
     }

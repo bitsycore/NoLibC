@@ -1,18 +1,20 @@
-#include "private/syscall.h"
+#include "public/nlc_file.h"
 
-s64 FileOpen(const s8* filename, const u64 flags) {
-	return SysOpen(filename, flags, 0644 /*rw-r--r--*/);
+#include "private/system.h"
+
+int FileOpen(const cStr filename, const int flags) {
+	return (int)SysOpen(filename, flags, 0644 /*rw-r--r--*/);
 }
 
-void FileClose(const s64 fd) {
+void FileClose(const int fd) {
 	SysClose(fd);
 }
 
-s64 FileRead(const s64 fd, u8* buf, const u64 count) {
+s64 FileRead(const int fd, u8* buf, const uSize count) {
 	return SysRead(fd, buf, count);
 }
 
-s64 FileWrite(const s64 fd, const u8* buf, const u64 count) {
+s64 FileWrite(const int fd, const u8* buf, const uSize count) {
 	return SysWrite(fd, buf, count);
 }
 
@@ -32,7 +34,7 @@ s64 FileWrite(const s64 fd, const u8* buf, const u64 count) {
 	#error "Architecture not supported"
 #endif
 
-s64 FileSize(const s64 fd) {
+sSize FileSize(const int fd) {
 	const s64 cur = SysLSeek(fd, 0, SEEK_CUR);
 	const s64 size = SysLSeek(fd, 0, SEEK_END);
 	SysLSeek(fd, cur, SEEK_SET);

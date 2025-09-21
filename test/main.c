@@ -5,19 +5,19 @@ void fileWriteTest() {
 	const Str message = StrConst("[TEST]: FileOpen, FileWrite, FileClose, FileOpen, FileRead\n");
 	u8 buffer[message.len];
 
-	s64 fd = FileOpen(filename.str, O_WRONLY | O_CREAT | O_TRUNC);
+	int fd = FileOpen(filename.str, OPEN_WRITE | OPEN_CREATE_IF_NEED | OPEN_TRUNCATE);
 	if (fd < 0) Exit(1);
 	FileWrite(fd, (u8*)message.str, message.len);
 	FileClose(fd);
 
-	fd = FileOpen(filename.str, O_RDONLY);
+	fd = FileOpen(filename.str, OPEN_READ);
 	if (fd < 0) Exit(1);
 	const s64 result = FileSize(fd);
 	PrintFmt("[TEST]: FileSize=%d\n", result);
 	const s64 n = FileRead(fd, buffer, sizeof(buffer));
 	FileClose(fd);
 
-	PrintLen((s8*)buffer, n);
+	PrintLen((cStr)buffer, n);
 }
 
 int main() {
@@ -28,25 +28,25 @@ int main() {
 	// --------------------------------------
 
 	Print("[TEST]: Print\n");
-	PrintLen("[TEST]: PrintLen\n", StrLenK("[TEST]: PrintLen\n"));
+	PrintLen("[TEST]: PrintLen\n", cStrLenK("[TEST]: PrintLen\n"));
 	PrintK("[TEST]: PrintK\n");
 
 	// --------------------------------------
 
 	PrintFile(FILE_STDOUT, "[TEST]: PrintFile\n");
-	PrintFileLen(FILE_STDOUT, "[TEST]: PrintFileLen\n", StrLenK("[TEST]: PrintFileLen\n"));
+	PrintFileLen(FILE_STDOUT, "[TEST]: PrintFileLen\n", cStrLenK("[TEST]: PrintFileLen\n"));
 	PrintFileK(FILE_STDOUT, "[TEST]: PrintFileK\n");
 
 	// --------------------------------------
 
 	PrintLn("[TEST]: PrintLn");
-	PrintLnLen("[TEST]: PrintLnLen", StrLenK("[TEST]: PrintLnLen"));
+	PrintLnLen("[TEST]: PrintLnLen", cStrLenK("[TEST]: PrintLnLen"));
 	PrintLnK("[TEST]: PrintLnK");
 
 	// --------------------------------------
 
 	PrintLnFile(FILE_STDOUT, "[TEST]: PrintLnFile");
-	PrintLnFileLen(FILE_STDOUT, "[TEST]: PrintLnFileLen", StrLenK("[TEST]: PrintLnFileLen"));
+	PrintLnFileLen(FILE_STDOUT, "[TEST]: PrintLnFileLen", cStrLenK("[TEST]: PrintLnFileLen"));
 	PrintLnFileK(FILE_STDOUT, "[TEST]: PrintLnFileK");
 
 	// --------------------------------------
@@ -58,8 +58,8 @@ int main() {
 
 	const s8 s3[] = "1234567";
 	const f64 f4 = 987.567123456789;
-	PrintFmt("[TEST]: StrLen=%d\n", StrLen(s3));
-	PrintFmt("[TEST]: StrLenK=%d\n", StrLenK(s3));
+	PrintFmt("[TEST]: cStrLen=%d\n", cStrLen(s3));
+	PrintFmt("[TEST]: cStrLenK=%d\n", cStrLenK(s3));
 	PrintFmt("[TEST]: PrintFmt with ptr, float=%9f\n", &f4);
 
 	// --------------------------------------
@@ -72,13 +72,13 @@ int main() {
 			PrintFmt("[TEST]: ArenaRemaining Before remaining=%d\n", remaining);
 		}
 		u8* buffer = ArenaAlloc(arenas[i], 1024);
-		Memset(buffer, 5, 1024);
+		MemorySet(buffer, 5, 1024);
 		buffer = ArenaAlloc(arenas[i], 1024);
 		if (i == 0) {
 			const u64 remaining = ArenaRemaining(arenas[i]);
 			PrintFmt("[TEST]: ArenaRemaining After remaining=%d\n", remaining);
 		}
-		Memset(buffer, 7, 1024);
+		MemorySet(buffer, 7, 1024);
 	}
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {
 		ArenaFree(arenas[i]);

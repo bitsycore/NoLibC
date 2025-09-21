@@ -1,14 +1,15 @@
 #include "private/entry.h"
 
-#include "private/syscall.h"
+#include "private/system.h"
+#include "public/nlc_string.h"
 
 // ============================
 // MARK: Entry point
 // ============================
 
 __attribute__((used)) volatile uSize gArgc;
-__attribute__((used)) volatile s8** gArgv;
-volatile s8** gEnvp;
+__attribute__((used)) volatile cStr* gArgv;
+volatile cStr* gEnvp;
 volatile uPtr* gAuxv;
 
 extern int main(int argc, char** argv);
@@ -16,10 +17,10 @@ extern int main(int argc, char** argv);
 #if defined(__linux__)
 __attribute__((used))
 void StartC(long argc, char** argv) {
-	argc = gArgc;
+	argc = (long)gArgc;
 	argv = (char**)gArgv;
 
-	s8** envp = &argv[argc + 1];
+	cStr* envp = &argv[argc + 1];
 	gEnvp = (volatile char**)envp;
 
 	while (*envp) {

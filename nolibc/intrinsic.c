@@ -1,7 +1,5 @@
 #include "public/nlc.h"
 
-#if defined(__clang__)
-
 __attribute__((used))
 void* memset(void* ptr, const int value, uSize num)  {
     u8* p = ptr;
@@ -36,7 +34,6 @@ void* memset(void* ptr, const int value, uSize num)  {
 
     return ptr;
 }
-#endif
 
 #if defined(__clang__) && !defined(__APPLE__)
 

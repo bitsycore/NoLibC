@@ -32,7 +32,7 @@ add_library(NoLibC
         nolibc/string.c
         nolibc/system.c
         nolibc/print.c
-        nolibc/private/syscall.h
+        nolibc/private/system.h
         nolibc/intrinsic.c
         nolibc/write_buffer.c
         nolibc/private/write_buffer.h
@@ -42,11 +42,13 @@ add_library(NoLibC
         nolibc/entry.c
         nolibc/arena.c
         nolibc/file.c
-)
-
-target_include_directories(
-        NoLibC PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/nolibc/public
+        nolibc/public/nlc_arena.h
+        nolibc/public/nlc_memory.h
+        nolibc/private/intrinsic.h
+        nolibc/public/nlc_file.h
+        nolibc/public/nlc_system.h
+        nolibc/public/nlc_string.h
+        nolibc/public/nlc_print.h
 )
 
 target_compile_options(NoLibC PUBLIC ${COMMON_COMPILE_OPTIONS})
@@ -58,6 +60,11 @@ target_link_options(NoLibC PUBLIC ${COMMON_LINK_OPTIONS})
 
 add_executable(NoLibC_Test
         test/main.c
+)
+
+target_include_directories(
+        NoLibC_Test PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/nolibc/public
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

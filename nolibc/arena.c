@@ -1,5 +1,6 @@
-#include "public/nlc.h"
-#include "public/nlc_types.h"
+#include "public/nlc_arena.h"
+
+#include "public/nlc_memory.h"
 
 typedef struct Arena {
 	uSize size;
@@ -9,8 +10,8 @@ typedef struct Arena {
 
 Arena* ArenaNew(const uSize size) {
 	const uSize totalSize = sizeof(Arena) + size;
-	Arena* arena = MapMem(totalSize);
-	Memset(arena, 0, totalSize);
+	Arena* arena = MemoryAlloc(totalSize);
+	MemorySet(arena, 0, totalSize);
 	arena->size = size;
 	return arena;
 }
@@ -27,13 +28,13 @@ void ArenaReset(Arena* arena) {
 }
 
 void ArenaFree(Arena* arena) {
-	UnmapMem(arena, sizeof(Arena) + arena->size);
+	MemoryFree(arena, sizeof(Arena) + arena->size);
 }
 
-u64 ArenaRemaining(const Arena* arena) {
+uSize ArenaRemaining(const Arena* arena) {
 	return arena->size - arena->used;
 }
 
-u64 ArenaSize(const Arena* arena) {
+uSize ArenaSize(const Arena* arena) {
 	return arena->size;
 }

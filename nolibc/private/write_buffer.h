@@ -1,7 +1,7 @@
 #ifndef NOLIBC_WRITER_BUFFER_H
 #define NOLIBC_WRITER_BUFFER_H
 
-#include "../public/nlc.h"
+#include "../public/nlc_types.h"
 
 #define OUTBUF_SIZE 1024
 
@@ -13,6 +13,6 @@ typedef struct WriteBuffer {
 
 void WriteBufferFlush(WriteBuffer* b);
 void WriteBufferPutc(WriteBuffer* b, s8 c);
-void WriteBufferPuts(WriteBuffer* b, const s8* s, u64 n);
+void WriteBufferPuts(WriteBuffer* b, const cStr s, u64 n);
 
 #endif //NOLIBC_WRITER_BUFFER_H
