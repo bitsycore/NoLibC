@@ -8,11 +8,9 @@ void Print(const cStr s);
 void PrintLen(const cStr s, uSize len);
 #define PrintK(_s_) PrintLen((cStr)(_s_), cStrLenK(_s_))
 
-__attribute__((overloadable))
 void PrintLn(const cStr s);
-__attribute__((overloadable))
-void PrintLn(const cStr s, uSize len);
-#define PrintLnK(_s_) PrintLn((cStr)(_s_), cStrLenK(_s_))
+void PrintLnLen(const cStr s, uSize len);
+#define PrintLnK(_s_) PrintLnLen((cStr)(_s_), cStrLenK(_s_))
 
 void PrintNewLine();
 

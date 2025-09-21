@@ -34,7 +34,7 @@ int main() {
 	// --------------------------------------
 
 	PrintLn("[TEST]: PrintLn");
-	PrintLn("[TEST]: PrintLnLen", cStrLenK("[TEST]: PrintLnLen"));
+	PrintLnLen("[TEST]: PrintLnLen", cStrLenK("[TEST]: PrintLnLen"));
 	PrintLnK("[TEST]: PrintLnK");
 
 	// --------------------------------------

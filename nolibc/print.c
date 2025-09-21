@@ -68,13 +68,13 @@ void PrintLen(const cStr s, const uSize len) {
 // PRINT LN
 // ---------------------------
 
-__attribute__((overloadable)) void PrintLn(const cStr s) {
+void PrintLn(const cStr s) {
 	const uSize len = cStrLen(s);
 	SysWrite(FILE_STDOUT, (u8*)s, len);
 	PrintNewLine();
 }
 
-__attribute__((overloadable)) void PrintLn(const cStr s, const uSize len) {
+void PrintLnLen(const cStr s, const uSize len) {
 	SysWrite(FILE_STDOUT, (u8*)s, len);
 	PrintNewLine();
 }
