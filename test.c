@@ -2,7 +2,6 @@
 
 #define TPRE AC_GREEN "[TEST]" AC_RESET ": "
 
-NLC_ATTR_NO_INLINE
 void testColor() {
 
 	PrintLnK(TPRE "ANSI Color");
@@ -155,7 +154,6 @@ void testColor() {
 	PrintNewLine();
 }
 
-NLC_ATTR_NO_INLINE
 void testFileWrite() {
 	const Str filename = StrConst("testfile.txt");
 	const Str message = StrConst(TPRE "FileOpen, FileWrite, FileClose, FileOpen, FileRead\n");
@@ -176,7 +174,6 @@ void testFileWrite() {
 	PrintLen((cStr)buffer, n);
 }
 
-NLC_ATTR_NO_INLINE
 void testPrintAndFormat(void) {
 	Print(TPRE "Print\n");
 	const Str printLenStr = StrConst(TPRE "PrintLen\n");
@@ -192,7 +189,6 @@ void testPrintAndFormat(void) {
 	FileWriteFmt(FILE_STDOUT, TPRE "PrintFmtFile int=%d, string=%s\n", 512, "\"Hahaha\"");
 }
 
-NLC_ATTR_NO_INLINE
 void testStrings(void) {
 	const s8 s3[] = "1234567";
 	const f64 f4 = 987.567123456789;
@@ -201,7 +197,6 @@ void testStrings(void) {
 	PrintFmt(TPRE "PrintFmt with ptr, float=%9f\n", &f4);
 }
 
-NLC_ATTR_NO_INLINE
 void testMemory(void) {
 	Arena* arenas[100];
 	for (int i = 0; i < sizeof(arenas) / sizeof(arenas[0]); i++) {

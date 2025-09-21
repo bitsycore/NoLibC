@@ -106,44 +106,111 @@ void _start() { // NOLINT(*-reserved-identifier)
 #elif defined(__linux__)
 #if defined(__x86_64__)
 	asm volatile (
-		"pop %rdi\n" // Pop argc into the first argument register (%rdi)
-		"mov %rsp, %rsi\n" // Move argv pointer (current %rsp) into the second argument register (%rsi)
-		"mov %rdi, gArgc(%rip)\n" // Save argc
-		"mov %rsi, gArgv(%rip)\n" // Save argv
-		"call StartC\n" // Call StartC(argc, argv)
+		// At entry: rsp -> argc
+		"pop %%rdi\n"           // rdi = argc
+		"mov %%rsp, %%rsi\n"    // rsi = argv (rsp points to argv[0])
+		"mov %%rsi, %%rdx\n"    // rdx = envp pointer start
+		"mov %%rdi, gArgc(%%rip)\n"
+		"mov %%rsi, gArgv(%%rip)\n"
+		"lea (%%rsi,%%rdi,8), %%rdx\n" // envp = argv + argc
+		"mov %%rdx, gEnvp(%%rip)\n"
+
+		// Align stack to 16 bytes before call
+		"andq $-16, %%rsp\n"
+		"call StartC\n"
+
+		// Should never return; if it does, exit
+		"mov $60, %%rax\n"  // SYS_exit
+		"xor %%rdi, %%rdi\n" // exit code 0
+		"syscall\n"
+		:
+		:
+		: "rax", "rdi", "rsi", "rdx", "memory"
 	);
 #elif defined(__i386__)
 	asm volatile (
-		"pop %eax\n" // Pop argc into eax
-		"mov %esp, %ebx\n" // Move argv pointer into ebx
-		"mov %eax, gArgc\n" // Save argc
-		"mov %ebx, gArgv\n" // Save argv
-		"push %ebx\n" // push argv
-		"push %eax\n" // push argc
-		"call StartC\n" // Call StartC(argc, argv)
-	);
-#elif defined(__aarch64__)
-	asm volatile (
-		"ldr x0, [sp]\n" // Load argc from stack into x0
-		"add x1, sp, #8\n" // Calculate the argv address (sp + 8) and put it in x1
-		"mov x2, %0\n" // Load address of gArgc into x2
-		"str x0, [x2]\n" // Save argc to gArgc
-		"mov x2, %1\n" // Load address of gArgv into x2
-		"str x1, [x2]\n" // Save argv to gArgv
-		"bl StartC\n" // Branch with a link to StartC
+		// Stack layout on entry:
+		// esp -> argc
+		//       argv[0], argv[1], ..., argv[argc-1], NULL
+		//       envp[0], ...
+		"pop %%eax\n"         // eax = argc
+		"mov %%esp, %%ebx\n"  // ebx = argv
+		"mov %%eax, gArgc\n"
+		"mov %%ebx, gArgv\n"
+
+		// Compute envp: argv + argc + 1
+		"mov %%eax, %%ecx\n"  // ecx = argc
+		"add $1, %%ecx\n"
+		"shl $2, %%ecx\n"     // ecx = (argc + 1) * 4 bytes
+		"add %%ebx, %%ecx\n"  // ecx = envp pointer
+		"mov %%ecx, gEnvp\n"
+
+		// Push arguments for StartC (cdecl)
+		"push %%ecx\n"        // envp
+		"push %%ebx\n"        // argv
+		"push %%eax\n"        // argc
+		"call StartC\n"
+
+		// Should not return; exit if it does
+		"mov $1, %%eax\n"     // SYS_exit
+		"xor %%ebx, %%ebx\n"
+		"int $0x80\n"
 		:
-		: "r"(&gArgc), "r"(&gArgv)
-		: "x0", "x1", "x2", "x30" // x30 is the link register
+		:
+		: "eax", "ebx", "ecx", "memory"
 	);
+#elif  defined(__aarch64__)
+	asm volatile(
+		// Entry: sp -> argc
+		"ldr x0, [sp]\n"          // argc
+		"add x1, sp, #8\n"        // argv
+		// Save globals
+		"adr x2, gArgc\n"
+		"str x0, [x2]\n"
+		"adr x2, gArgv\n"
+		"str x1, [x2]\n"
+		"adr x2, gEnvp\n"
+		"add x3, x1, x0, lsl #3\n" // argv + argc*8
+		"add x3, x3, #8\n"          // skip NULL -> envp
+		"str x3, [x2]\n"
+		// Align stack to 16 bytes before call
+		"and sp, sp, #-16\n"
+		// Call C entry
+		"bl StartC\n"
+		// Exit if it returns
+		"mov x8, #93\n"
+		"mov x0, #0\n"
+		"svc #0\n"
+		:
+		:
+		: "x0","x1","x2","x3","x30","memory"
+	);
+
 #elif defined(__arm__)
-	asm volatile (
-		"ldr r0, [sp]\n" // Load argc from stack into r0
-		"add r1, sp, #4\n" // Calculate argv address (sp + 4) into r1
-		"ldr r2, =gArgc\n" // Load address of gArgc into r2
-		"str r0, [r2]\n" // Save argc
-		"ldr r2, =gArgv\n" // Load address of gArgv into r2
-		"str r1, [r2]\n" // Save argv
-		"bl StartC\n" // Branch with link to StartC
+	register uint32_t *r2 asm("r2") = &gArgc;
+	register uint32_t *r3 asm("r3") = &gArgv;
+	register uint32_t *r4 asm("r4") = &gEnvp;
+	asm volatile(
+		"ldr r0, [sp]\n"           // argc
+		"add r1, sp, #4\n"         // argv
+		// Save globals
+		"str r0, [r2]\n"           // gArgc
+		"str r1, [r3]\n"           // gArgv
+		"add r5, r1, r0, lsl #2\n" // argv + argc*4
+		"add r5, r5, #4\n"          // skip NULL -> envp
+		"str r5, [r4]\n"           // gEnvp
+		// Call C entry
+		"mov r0, r0\n"             // argc
+		"mov r1, r1\n"             // argv
+		"mov r2, r5\n"             // envp
+		"bl StartC\n"
+		// Exit if it returns
+		"mov r7, #1\n"             // SYS_exit
+		"mov r0, #0\n"             // exit code
+		"svc #0\n"
+		:
+		:
+		: "r0","r1","r2","r3","r4","r5","lr","memory"
 	);
 #else
 #error "Unsupported architecture"

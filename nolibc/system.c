@@ -138,7 +138,7 @@ sPtr SysRead(const u64 fd, u8* buf, const u64 count) {
 
 void SysExit(const s64 status) {
 	SysCall(SYS_exit, status, 0, 0, 0, 0, 0);
-  NLC_UNREACHABLE();
+	NLC_UNREACHABLE
 }
 
 sPtr SysOpen(const char* pathname, const u64 flags, const u64 mode) {
