@@ -11,8 +11,9 @@ typedef struct WriteBuffer {
     u64 fd;
 } WriteBuffer;
 
-void WriteBufferFlush(WriteBuffer* b);
-void WriteBufferPutc(WriteBuffer* b, s8 c);
-void WriteBufferPuts(WriteBuffer* b, const cStr s, u64 n);
+void WriteBufferFlush(WriteBuffer* wb);
+void WriteBufferPutc(WriteBuffer* wb, s8 c);
+void WriteBufferPuts(WriteBuffer* wb, const cStr str, uSize n);
+void WriteBufferFmtV(WriteBuffer* wb, const cStr fmt, vaList va);
 
 #endif //NOLIBC_WRITER_BUFFER_H

@@ -33,26 +33,14 @@ int main() {
 
 	// --------------------------------------
 
-	PrintFile(FILE_STDOUT, "[TEST]: PrintFile\n");
-	PrintFileLen(FILE_STDOUT, "[TEST]: PrintFileLen\n", cStrLenK("[TEST]: PrintFileLen\n"));
-	PrintFileK(FILE_STDOUT, "[TEST]: PrintFileK\n");
-
-	// --------------------------------------
-
 	PrintLn("[TEST]: PrintLn");
 	PrintLnLen("[TEST]: PrintLnLen", cStrLenK("[TEST]: PrintLnLen"));
 	PrintLnK("[TEST]: PrintLnK");
 
 	// --------------------------------------
 
-	PrintLnFile(FILE_STDOUT, "[TEST]: PrintLnFile");
-	PrintLnFileLen(FILE_STDOUT, "[TEST]: PrintLnFileLen", cStrLenK("[TEST]: PrintLnFileLen"));
-	PrintLnFileK(FILE_STDOUT, "[TEST]: PrintLnFileK");
-
-	// --------------------------------------
-
 	PrintFmt("[TEST]: PrintFmt int=%d, string=%s\n", 256, "\"TestString\"");
-	PrintFmtFile(FILE_STDOUT, "[TEST]: PrintFmtFile int=%d, string=%s\n", 512, "\"Hahaha\"");
+	FileWriteFmt(FILE_STDOUT, "[TEST]: PrintFmtFile int=%d, string=%s\n", 512, "\"Hahaha\"");
 
 	// --------------------------------------
 

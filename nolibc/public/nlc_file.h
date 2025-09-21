@@ -9,6 +9,9 @@ s64 FileRead(int fd, u8* buf, u64 count);
 s64 FileWrite(int fd, const u8* buf, u64 count);
 sSize FileSize(int fd);
 
+void FileWriteFmtV(int fd, const cStr fmt, vaList va_list);
+void FileWriteFmt(int fd, const cStr fmt, ...);
+
 // ============================
 // FD
 // ============================

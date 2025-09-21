@@ -31,4 +31,6 @@ typedef double f64;
 #define true ((_Bool)(1))
 #define false ((bool)(0))
 
+typedef __builtin_va_list vaList;
+
 #endif //NOLIBC_NLC_TYPES_H

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(NoLibC C)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 
 # ===================================================================================
 # MARK: COMMON OPTIONS
@@ -49,6 +49,8 @@ add_library(NoLibC
         nolibc/public/nlc_system.h
         nolibc/public/nlc_string.h
         nolibc/public/nlc_print.h
+        nolibc/format.c
+        nolibc/public/nlc_format.h
 )
 
 target_compile_options(NoLibC PUBLIC ${COMMON_COMPILE_OPTIONS})
