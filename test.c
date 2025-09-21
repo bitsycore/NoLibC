@@ -2,6 +2,9 @@
 
 #include "nolibc/private/system.h"
 
+#define MIN(a, b)      ((a) < (b) ? (a) : (b))
+#define MAX(a, b)      ((a) > (b) ? (a) : (b))
+#define CLAMP(x, lo, hi)  ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #define TPRE AC_GREEN "[TEST]" AC_RESET ": "
 
 NLC_ATTR_NO_INLINE
@@ -250,68 +253,119 @@ struct NLC_ATTR_PACKED winsize {
 	unsigned short ws_ypixel;
 };
 
+// c_lflag
+#define ICANON  0x0002
+#define ECHO    0x0008
+#define ISIG    0x0001
+#define IEXTEN  0x8000
+
+// c_iflag
+#define ICRNL   0000400
+#define INPCK   0000020
+#define ISTRIP  0000040
+#define IXON    0002000
+
+// c_oflag
+#define OPOST   0000001
+
+// c_cflag
+#define CS8     0000060
+
+// c_cc index
+#define VMIN    6
+#define VTIME   5
+
 void terminalSetRawMode(struct termios* orig) {
 	struct termios edited;
-	SysCall(SYS_IOCTL, FILE_STDIN, TCGETS, (uPtr)&*orig, 0, 0, 0);
+	SysCall(SYS_IOCTL, FILE_STDIN, TCGETS, (uPtr)orig, 0, 0, 0);
 	edited = *orig;
-	edited.c_lflag &= ~(0x0002 | 0x0001); // ~ECHO | ~ICANON
+
+	// Disable canonical mode, echo, signals, extended processing
+	edited.c_lflag &= ~(ICANON | ECHO | ISIG );
+
+	// Disable CR-to-NL translation, parity check, strip, flow control
+	//edited.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON);
+
+	// Disable all output processing
+	//edited.c_oflag &= ~(OPOST);
+
+	// Set 8-bit chars
+	//edited.c_cflag |= (CS8);
+
+	// Minimum of 1 byte, no timeout
+	edited.c_cc[VMIN]  = 1;
+	edited.c_cc[VTIME] = 0;
+
 	SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)&edited, 0, 0, 0);
 }
 
 void terminalRestore(struct termios *orig) { SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)orig, 0, 0, 0); }
 
+void terminalClearScreen(void) {
+	FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[2J"));
+}
+
+void terminalSetCursor(const uSize x, const uSize y) {
+	FileWriteFmt(FILE_STDOUT, "\033[%d;%dH", y+1, x+1);
+}
+
+void terminalRenderScreen(s8* screen, const uSize width, const uSize height) {
+	terminalSetCursor(0, 0);
+	for (uSize y = 0; y < height; y++) {
+		FileWrite(FILE_STDOUT, (u8*)screen+(y*width), width);
+		FileWrite(FILE_STDOUT, (u8*)StrParamLen("\n"));
+	}
+}
+
+void terminalDrawChar(const s8 c) {
+	FileWrite(FILE_STDOUT, (u8*)&c, 1);
+}
+
 void FIXMEtestTerminal(void) {
 	struct termios orig;
-	//terminalSetRawMode(&orig);
+	terminalSetRawMode(&orig);
 
 	struct winsize ws;
-	sPtr result = SysCall(SYS_IOCTL, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
-	const uSize HEIGHT = 30;
-	const uSize WIDTH = 80;
-
+	const sPtr result = SysCall(SYS_IOCTL, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
+	if (result < 0) return;
+	const uSize HEIGHT = ws.ws_row;
+	const uSize WIDTH = ws.ws_col > 120 ? 120 : ws.ws_col;
 	s8 screen[HEIGHT][WIDTH];
-    uSize x=0, y=0;
+	MemorySet(&screen, ' ', sizeof(screen));
+	MemorySet(&screen[0], '-', WIDTH);
+	MemorySet(&screen[HEIGHT-1], '-', WIDTH);
+	for (uSize y = 1; y < HEIGHT-1; y++) {
+		screen[y][0] = '|';
+		screen[y][WIDTH-1] = '|';
+	}
+	screen[HEIGHT/2][WIDTH/2] = 'X';
 
-    // initialize screen
-    for(uSize i=0;i<HEIGHT;i++)
-        for(uSize j=0;j<WIDTH;j++)
-            screen[i][j]=' ';
+	uSize cursor_x=1, cursor_y=1;
 
-    // draw box once
-    FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[2J"));  // clear screen
-    for(int i=-1;i<=HEIGHT;i++){
-        for(int j=-1;j<=WIDTH;j++){
-            if(i==-1 || i==HEIGHT || j==-1 || j==WIDTH) FileWrite(1,(u8*)StrParamLen("#"));
-            else FileWrite(1,(u8*)StrParamLen(" "));
-        }
-        FileWrite(1,(u8*)StrParamLen("\n"));
-    }
+	terminalClearScreen();
+	terminalRenderScreen((s8*)&screen, WIDTH, HEIGHT);
 
     while(1){
-		u8 buf[1];
-		// move cursor
-        FileWriteFmt(FILE_STDOUT, "\033[%d;%dH", y+2, x+2);
+    	terminalSetCursor(cursor_x, cursor_y);
 
-        // draw character under cursor
-        FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
-
-        // read input
+    	// KEYBOARD INPUT
+    	u8 buf[1];
         if(FileRead(FILE_STDIN, buf, 1)<=0) continue;
 
         const s8 c = (s8)buf[0];
-
-        if(c==3) break; // Ctrl-C exit
-		if(c==127||c==8){ // backspace
-			if(x>0) {
-				x--;
-				screen[y][x]=' ';
-				FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
+        if(c==3) break; // End of Text // Ctrl-C
+		if(c==127/*DEL*/||c==8/*Backspace*/){
+			if(cursor_x>0) {
+				cursor_x = MAX(1, cursor_x-1);
+				screen[cursor_y][cursor_x]=' ';
+				terminalSetCursor(cursor_x, cursor_y);
+				terminalDrawChar(screen[cursor_y][cursor_x]);
 			}
 		}
-		else if(c>=32 && c<=126){ // printable
-			screen[y][x]=c;
-			if(x<WIDTH-1) x++;
-			FileWrite(FILE_STDOUT, (u8*)&screen[y][x], 1);
+		else if(c>=32 && c<=126){ // Printable
+			screen[cursor_y][cursor_x] = c;
+			terminalDrawChar(screen[cursor_y][cursor_x]);
+			cursor_x = MIN(WIDTH-2, cursor_x+1);
 		}
     	// arrow keys
 		else if(c==27){
@@ -319,17 +373,16 @@ void FIXMEtestTerminal(void) {
 			if(FileRead(FILE_STDIN, (u8*)&seq[0], 1)==0) continue;
 			if(FileRead(FILE_STDIN, (u8*)&seq[1], 1)==0) continue;
 			if(seq[0]=='['){
-				if(seq[1]=='A' && y>0) y--;				// up
-				else if(seq[1]=='B' && y<HEIGHT-1) y++;	// down
-				else if(seq[1]=='C' && x<WIDTH-1) x++;	// right
-				else if(seq[1]=='D' && x>0) x--;		// left
+				if(seq[1]=='A')			cursor_y = MAX(cursor_y-1, 1);			// up
+				else if(seq[1]=='D')	cursor_x = MAX(cursor_x-1, 1);			// left
+				else if(seq[1]=='B')	cursor_y = MIN(cursor_y+1, HEIGHT-2);	// down
+				else if(seq[1]=='C')	cursor_x = MIN(cursor_x+1, WIDTH-2);	// right
 			}
 		}
 	}
 
-	// reset color, show cursor
-    FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[0m\033[?25h"));
-	//terminalRestore(&orig);
+    terminalClearScreen();
+	terminalRestore(&orig);
 }
 
 NLC_ATTR_NO_INLINE
@@ -337,8 +390,8 @@ int main(const int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	//FIXMEtestTerminal();
-	//return 0;
+	FIXMEtestTerminal();
+	return 0;
 	testColor();
 	testFileWrite();
 	testPrintAndFormat();
