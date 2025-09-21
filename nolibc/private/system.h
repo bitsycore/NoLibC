@@ -49,7 +49,7 @@
 		# define SYS_fstat     5
 		# define SYS_lseek     8
 		# define SYS_mmap      9
-		# define SYS_IOCTL     16
+		# define SYS_ioctl     16
 		# define SYS_pread64   17
 		# define SYS_pwrite64  18
 		# define SYS_munmap    11
@@ -114,6 +114,7 @@
 		# define SYS_open		5
 		# define SYS_close		6
 		# define SYS_exit		1
+		# define SYS_ioctl		54
 		# define SYS_fstat		189
 		# define SYS_stat		188
 		# define SYS_lseek		199

@@ -277,7 +277,7 @@ struct NLC_ATTR_PACKED winsize {
 
 void terminalSetRawMode(struct termios* orig) {
 	struct termios edited;
-	SysCall(SYS_IOCTL, FILE_STDIN, TCGETS, (uPtr)orig, 0, 0, 0);
+	SysCall(SYS_ioctl, FILE_STDIN, TCGETS, (uPtr)orig, 0, 0, 0);
 	edited = *orig;
 
 	// Disable canonical mode, echo, signals, extended processing
@@ -296,10 +296,10 @@ void terminalSetRawMode(struct termios* orig) {
 	edited.c_cc[VMIN]  = 1;
 	edited.c_cc[VTIME] = 0;
 
-	SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)&edited, 0, 0, 0);
+	SysCall(SYS_ioctl, FILE_STDIN, TCSETS, (uPtr)&edited, 0, 0, 0);
 }
 
-void terminalRestore(struct termios *orig) { SysCall(SYS_IOCTL, FILE_STDIN, TCSETS, (uPtr)orig, 0, 0, 0); }
+void terminalRestore(struct termios *orig) { SysCall(SYS_ioctl, FILE_STDIN, TCSETS, (uPtr)orig, 0, 0, 0); }
 
 void terminalClearScreen(void) {
 	FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[2J"));
@@ -326,7 +326,7 @@ void FIXMEtestTerminal(void) {
 	terminalSetRawMode(&orig);
 
 	struct winsize ws;
-	const sPtr result = SysCall(SYS_IOCTL, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
+	const sPtr result = SysCall(SYS_ioctl, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
 	if (result < 0) return;
 	const uSize HEIGHT = ws.ws_row;
 	const uSize WIDTH = ws.ws_col > 120 ? 120 : ws.ws_col;
