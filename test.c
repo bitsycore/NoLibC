@@ -337,7 +337,7 @@ int main(const int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	FIXMEtestTerminal();
+	//FIXMEtestTerminal();
 	//return 0;
 	testColor();
 	testFileWrite();
