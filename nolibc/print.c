@@ -14,7 +14,7 @@
 
 void FileWriteFmtV(const int fd, const cStr fmt, vaList vlist) {
 	WriteBuffer b = {.len = 0, .fd = fd};
-	WriteBufferFmtV(fmt, vlist, &b);
+	WriteBufferFmtV(&b, fmt, vlist);
 	WriteBufferFlush(&b);
 }
 
@@ -22,7 +22,7 @@ void FileWriteFmt(const int fd, const cStr fmt, ...) {
 	WriteBuffer b = {.len = 0, .fd = fd};
 	vaList ap;
 	__builtin_va_start(ap, fmt);
-	WriteBufferFmtV(fmt, ap, &b);
+	WriteBufferFmtV(&b, fmt, ap);
 	__builtin_va_end(ap);
 	WriteBufferFlush(&b);
 }
@@ -68,13 +68,13 @@ void PrintLen(const cStr s, const uSize len) {
 // PRINT LN
 // ---------------------------
 
-void PrintLn(const cStr s) {
+__attribute__((overloadable)) void PrintLn(const cStr s) {
 	const uSize len = cStrLen(s);
 	SysWrite(FILE_STDOUT, (u8*)s, len);
 	PrintNewLine();
 }
 
-void PrintLnLen(const cStr s, const uSize len) {
+__attribute__((overloadable)) void PrintLn(const cStr s, const uSize len) {
 	SysWrite(FILE_STDOUT, (u8*)s, len);
 	PrintNewLine();
 }
