@@ -2,6 +2,7 @@
 #define NOLIBC_NLC_FILE_H
 
 #include "nlc_types.h"
+#include "nlc_va_list.h"
 
 int FileOpen(const cStr filename, int flags);
 void FileClose(int fd);
@@ -9,7 +10,7 @@ s64 FileRead(int fd, u8* buf, u64 count);
 s64 FileWrite(int fd, const u8* buf, u64 count);
 sSize FileSize(int fd);
 
-void FileWriteFmtV(int fd, const cStr fmt, vaList va_list);
+void FileWriteFmtV(int fd, const cStr fmt, VaList argList);
 void FileWriteFmt(int fd, const cStr fmt, ...);
 
 // ============================

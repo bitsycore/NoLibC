@@ -328,14 +328,14 @@ void terminalLog(const s8* message, const int cursor_x, const int cursor_y, cons
 	MemorySet(blank, ' ', width);
 	FileWrite(FILE_STDOUT, (u8*)blank, width);
 	terminalSetCursor(0, height);
-	vaList args;
-	__builtin_va_start(args, height);
+	VaList args;
+	VaStart(args, height);
 	FileWriteFmtV(FILE_STDOUT, (s8*)message, args);
-	__builtin_va_end(args);
+	VaEnd(args);
 	terminalSetCursor(cursor_x, cursor_y);
 }
 
-void FIXMEtestTerminal(void) {
+void testTerminal(void) {
 	struct termios orig;
 	terminalSetRawMode(&orig);
 
@@ -419,12 +419,11 @@ void FIXMEtestTerminal(void) {
 }
 
 NLC_ATTR_NO_INLINE
-int main(const int argc, char** argv) {
+int main(const int argc, cStr* argv) {
 	(void)argc;
 	(void)argv;
 
-	//FIXMEtestTerminal();
-	//return 0;
+	testTerminal();
 	testColor();
 	testFileWrite();
 	testPrintAndFormat();

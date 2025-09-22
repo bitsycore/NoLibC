@@ -26,7 +26,14 @@ void WriteBufferPuts(WriteBuffer* wb, const cStr str, const u64 n) {
     }
 }
 
-void WriteBufferFmtV(WriteBuffer* wb, const cStr fmt, vaList va) {
+void WriteBufferFmt(WriteBuffer* wb, const cStr fmt, ...) {
+    VaList ap;
+    VaStart(ap, fmt);
+    WriteBufferFmtV(wb, fmt, ap);
+    VaEnd(ap);
+}
+
+void WriteBufferFmtV(WriteBuffer* wb, const cStr fmt, VaList vaList) {
     const cStr p = fmt;
     s8 numBuff[64];
 
@@ -55,7 +62,7 @@ void WriteBufferFmtV(WriteBuffer* wb, const cStr fmt, vaList va) {
 
         switch (*p) {
             case 'f': {
-                const uPtr fptr = __builtin_va_arg(va, uPtr);
+                const uPtr fptr = VaArg(vaList, uPtr);
                 const f64 f = *(f64*)fptr;
                 u64 len = 0;
                 FormatFloatToCStr(f, numBuff, &len, width == 0 ? 6 : width);
@@ -63,31 +70,31 @@ void WriteBufferFmtV(WriteBuffer* wb, const cStr fmt, vaList va) {
                 break;
             }
             case 's': {
-                const cStr s = __builtin_va_arg(va, const cStr);
+                const cStr s = VaArg(vaList, const cStr);
                 if (!s) s = (const cStr)"(null)";
                 WriteBufferPuts(wb, s, cStrLen(s));
                 break;
             }
             case 'd': {
-                const s64 v = __builtin_va_arg(va, s64);
+                const s64 v = VaArg(vaList, s64);
                 const u64 len = FormatSignedToCStr(v, numBuff);
                 WriteBufferPuts(wb, numBuff, len);
                 break;
             }
             case 'u': {
-                const u64 v = __builtin_va_arg(va, u64);
+                const u64 v = VaArg(vaList, u64);
                 const u64 len = FormatUnsignedToCStr(v, 10, numBuff, width);
                 WriteBufferPuts(wb, numBuff, len);
                 break;
             }
             case 'x': {
-                const u64 v = __builtin_va_arg(va, u64);
+                const u64 v = VaArg(vaList, u64);
                 const u64 len = FormatUnsignedToCStr(v, 16, numBuff, width);
                 WriteBufferPuts(wb, numBuff, len);
                 break;
             }
             case 'c': {
-                const sPtr ch = __builtin_va_arg(va, sPtr);
+                const sPtr ch = VaArg(vaList, sPtr);
                 WriteBufferPutc(wb, (s8)ch);
                 break;
             }

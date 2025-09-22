@@ -25,7 +25,7 @@
 #define NLC_ATTR_DEPRECATED			__attribute__ ((deprecated))
 #define NLC_ATTR_DEPRECATED_MSG(x)	__attribute__ ((deprecated(x)))
 
-#define NLC_UNREACHABLE __builtin_unreachable();
+#define Unreachable() __builtin_unreachable()
 
 void Exit(int status);
 

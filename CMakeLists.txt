@@ -105,6 +105,7 @@ add_library(NoLibC STATIC
 		nolibc/string.c
 		nolibc/system.c
 		nolibc/write_buffer.c
+		nolibc/public/nlc_va_list.h
 )
 
 target_compile_options(NoLibC PUBLIC ${COMMON_COMPILE_OPTIONS})

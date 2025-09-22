@@ -15,6 +15,6 @@ void PrintLnLen(const cStr s, uSize len);
 void PrintNewLine();
 
 void PrintFmt(const cStr fmt, ...);
-void PrintFmtV(const cStr fmt, vaList va);
+void PrintFmtV(const cStr fmt, VaList argList);
 
 #endif //NOLIBC_NLC_PRINT_H
