@@ -22,6 +22,21 @@ uSize MemoryPageSize() {
 		stackPtr += 2;
 	}
 	PAGE_SIZE_CALCULATED = pageSize;
+#elif __APPLE__
+	int mib[2] = { 1 /*CTL_HW*/, 7 /*HW_PAGESIZE*/ };
+	u32 page_size = 0;
+	uSize len = sizeof(page_size);
+	// Syscall 202 on ARM64 macOS
+	sPtr result = SysCall(
+		202,
+		(uPtr)mib,
+		2,
+		(uPtr)&page_size,
+		(uPtr)&len,
+		0,
+		0
+	);
+	if (result == 0) pageSize = page_size;
 #endif
 	return pageSize;
 }
