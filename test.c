@@ -302,10 +302,10 @@ void terminalSetRawMode(struct termios* orig) {
 void terminalRestore(struct termios *orig) { SysCall(SYS_ioctl, FILE_STDIN, TCSETS, (uPtr)orig, 0, 0, 0); }
 
 void terminalClearScreen(void) {
-	FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[2J"));
+	FileWrite(FILE_STDOUT, (u8*)StrParamLen("\033[H\033[J"));
 }
 
-void terminalSetCursor(const uSize x, const uSize y) {
+void terminalSetCursor(const int x, const int y) {
 	FileWriteFmt(FILE_STDOUT, "\033[%d;%dH", y+1, x+1);
 }
 
@@ -321,15 +321,34 @@ void terminalDrawChar(const s8 c) {
 	FileWrite(FILE_STDOUT, (u8*)&c, 1);
 }
 
+NLC_ATTR_PRINTF(1, 6)
+void terminalLog(const s8* message, const int cursor_x, const int cursor_y, const int width, const int height, ...) {
+	terminalSetCursor(0, height);
+	s8 blank[width];
+	MemorySet(blank, ' ', width);
+	FileWrite(FILE_STDOUT, (u8*)blank, width);
+	terminalSetCursor(0, height);
+	vaList args;
+	__builtin_va_start(args, height);
+	FileWriteFmtV(FILE_STDOUT, (s8*)message, args);
+	__builtin_va_end(args);
+	terminalSetCursor(cursor_x, cursor_y);
+}
+
 void FIXMEtestTerminal(void) {
 	struct termios orig;
 	terminalSetRawMode(&orig);
 
 	struct winsize ws;
 	const sPtr result = SysCall(SYS_ioctl, FILE_STDOUT, TIOCGWINSZ, (uPtr)&ws, 0, 0, 0);
-	if (result < 0) return;
-	const uSize HEIGHT = ws.ws_row;
-	const uSize WIDTH = ws.ws_col > 120 ? 120 : ws.ws_col;
+	int HEIGHT, WIDTH;
+	if (result < 0) {
+		HEIGHT = 24;
+		WIDTH = 80;
+	} else {
+		HEIGHT = ws.ws_row;
+		WIDTH = ws.ws_col > 120 ? 120 : ws.ws_col;
+	}
 	s8 screen[HEIGHT][WIDTH];
 	MemorySet(&screen, ' ', sizeof(screen));
 	MemorySet(&screen[0], '-', WIDTH);
@@ -340,16 +359,16 @@ void FIXMEtestTerminal(void) {
 	}
 	screen[HEIGHT/2][WIDTH/2] = 'X';
 
-	uSize cursor_x=1, cursor_y=1;
+	int cursor_x=1, cursor_y=1;
 
 	terminalClearScreen();
 	terminalRenderScreen((s8*)&screen, WIDTH, HEIGHT);
-
+	u8 buf[1] = {0};
     while(1){
     	terminalSetCursor(cursor_x, cursor_y);
 
     	// KEYBOARD INPUT
-    	u8 buf[1];
+
         if(FileRead(FILE_STDIN, buf, 1)<=0) continue;
 
         const s8 c = (s8)buf[0];
@@ -361,11 +380,13 @@ void FIXMEtestTerminal(void) {
 				terminalSetCursor(cursor_x, cursor_y);
 				terminalDrawChar(screen[cursor_y][cursor_x]);
 			}
+			terminalLog("[%d, %d], lastKey=BACKSPACE", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
 		}
 		else if(c>=32 && c<=126){ // Printable
 			screen[cursor_y][cursor_x] = c;
 			terminalDrawChar(screen[cursor_y][cursor_x]);
 			cursor_x = MIN(WIDTH-2, cursor_x+1);
+			terminalLog("[%d, %d], lastKey=%c", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y, buf[0]);
 		}
     	// arrow keys
 		else if(c==27){
@@ -373,10 +394,22 @@ void FIXMEtestTerminal(void) {
 			if(FileRead(FILE_STDIN, (u8*)&seq[0], 1)==0) continue;
 			if(FileRead(FILE_STDIN, (u8*)&seq[1], 1)==0) continue;
 			if(seq[0]=='['){
-				if(seq[1]=='A')			cursor_y = MAX(cursor_y-1, 1);			// up
-				else if(seq[1]=='D')	cursor_x = MAX(cursor_x-1, 1);			// left
-				else if(seq[1]=='B')	cursor_y = MIN(cursor_y+1, HEIGHT-2);	// down
-				else if(seq[1]=='C')	cursor_x = MIN(cursor_x+1, WIDTH-2);	// right
+				if(seq[1]=='A') {
+					cursor_y = MAX(cursor_y-1, 1); // up
+					terminalLog("[%d, %d], lastKey=UP", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
+				}
+				else if(seq[1]=='D') {
+					cursor_x = MAX(cursor_x-1, 1); // left
+					terminalLog("[%d, %d], lastKey=LEFT", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
+				}
+				else if(seq[1]=='B') {
+					cursor_y = MIN(cursor_y+1, HEIGHT-2); // down
+					terminalLog("[%d, %d], lastKey=DOWN", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
+				}
+				else if(seq[1]=='C') {
+					cursor_x = MIN(cursor_x+1, WIDTH-2); // right
+					terminalLog("[%d, %d], lastKey=RIGHT", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
+				}
 			}
 		}
 	}
