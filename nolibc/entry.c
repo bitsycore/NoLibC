@@ -3,35 +3,22 @@
 #include "private/system.h"
 #include "public/nlc_system.h"
 
-// ============================
-// MARK: Entry point
-// ============================
+#define XSTR(x) STR(x)
+#define STR(x) #x
 
 NLC_ATTR_USED volatile uSize gArgc;
 NLC_ATTR_USED volatile cStr* gArgv;
-volatile cStr* gEnvp;
-volatile uPtr* gAuxv;
+NLC_ATTR_USED volatile cStr* gEnvp;
+NLC_ATTR_USED volatile uPtr* gAuxv;
 
 extern int main(int argc, char** argv);
 
-#if defined(__linux__)
-NLC_ATTR_USED
-void StartC(long argc, char** argv) {
-	argc = (long)gArgc;
-	argv = (char**)gArgv;
+// ============================
+// MARK: APPLE
+// =============================
 
-	cStr* envp = &argv[argc + 1];
-	gEnvp = (volatile char**)envp;
+#if defined(__APPLE__)
 
-	while (*envp) {
-		envp++;
-	}
-	gAuxv = (uPtr*)(envp + 1);
-
-	const int status = main((int)argc, argv);
-	SysExit(status);
-}
-#elif defined(__APPLE__)
 NLC_ATTR_USED
 void StartC(long argc, char** argv) {
 	argc = gArgc;
@@ -42,178 +29,213 @@ void StartC(long argc, char** argv) {
 	const int status = main((int)argc, argv);
 	SysExit(status);
 }
-#endif
 
 NLC_ATTR_NAKED
-void _start() { // NOLINT(*-reserved-identifier)
-#if defined(__APPLE__)
+// NOLINT(*-reserved-identifier)
+void _start() {
 #if defined(__x86_64__)
 	asm volatile (
-		"pop %rdi\n" /* argc */
-		"mov %rsp, %rsi\n" /* argv */
-		"mov %rdi, gArgc(%rip)\n"
-		"mov %rsi, gArgv(%rip)\n"
+		// At entry: rdi = argc, rsi = argv, rdx = envp
+		"mov qword ptr [%[argc]], rdi\n"   // store argc
+		"mov qword ptr [%[argv]], rsi\n"   // store argv
+		"mov qword ptr [%[envp]], rdx\n"   // store envp
+
+		// Align stack to 16 bytes before call
+		"and rsp, -16\n"
 		"call StartC\n"
-		"mov %eax, %edi\n" /* return code */
-		"mov $0x2000001, %rax\n" /* sys_exit */
+
+		// If returns, exit(rax)
+		"mov rdi, rax\n"                   // exit code
+		"mov rax, 0x2000001\n"             // macOS sys_exit
 		"syscall\n"
+		:
+		[argc] "=m" (gArgc),
+		[argv] "=m" (gArgv),
+		[envp] "=m" (gEnvp)
+		:
+		: "rax","rdi","rsi","rdx","memory"
 	);
 #elif defined(__i386__)
 	asm volatile (
-		"pop %eax\n" /* argc */
-		"mov %esp, %ebx\n" /* argv */
-		"mov %eax, gArgc\n"
-		"mov %ebx, gArgv\n"
-		"push %eax\n"
-		"push %ebx\n"
+		// At entry: eax = argc, ebx = argv, ecx = envp
+		"mov [%[argc]], eax\n"  // store argc
+		"mov [%[argv]], ebx\n"  // store argv
+		"mov [%[envp]], ecx\n"  // store envp
+
+		// Align stack to 8 bytes before call
+		"and esp, -8\n"
 		"call StartC\n"
-		"mov %eax, %ebx\n" /* return code */
-		"mov $1, %eax\n" /* sys_exit */
-		"int $0x80\n"
+
+		// If returns, exit(eax)
+		"mov ebx, eax\n"        // exit code
+		"mov eax, 0x2000001\n"  // macOS sys_exit
+		"int 0x80\n"
+		:
+		[argc] "=m" (gArgc),
+		[argv] "=m" (gArgv),
+		[envp] "=m" (gEnvp)
+		:
+		: "eax","ebx","ecx","memory"
 	);
 #elif defined(__aarch64__)
 	asm volatile (
-		"ldr x0, [sp]\n" /* argc */
-		"add x1, sp, #8\n" /* argv */
-		"str x0, %[argc]\n"
-		"str x1, %[argv]\n"
+		// At entry: x0 = argc, x1 = argv, x2 = envp
+		"str x0, %[argc]\n"   // store argc
+		"str x1, %[argv]\n"   // store argv
+		"str x2, %[envp]\n"   // store envp
+
+		// Align stack to 16 bytes before call
+		"and sp, sp, #-16\n"
 		"bl StartC\n"
-		"mov x0, x0\n" /* return code */
-		"mov x16, #1\n" /* sys_exit */
+
+		// If returns, exit(x0)
+		"mov x16, #1\n"       // macOS sys_exit
 		"svc #0\n"
 		:
 		[argc] "=m" (gArgc),
-		[argv] "=m" (gArgv)
+		[argv] "=m" (gArgv),
+		[envp] "=m" (gEnvp)
 		:
-		: "x0","x1","x16","x30"
+		: "x0","x1","x2","x16","x30","memory"
 	);
 #elif defined(__arm__)
 	asm volatile (
-		"ldr r0, [sp]\n" /* argc */
-		"add r1, sp, #4\n" /* argv */
-		"ldr r2, =gArgc\n"
-		"str r0, [r2]\n"
-		"ldr r2, =gArgv\n"
-		"str r1, [r2]\n"
+		// At entry: r0 = argc, r1 = argv, r2 = envp
+		"str r0, %[argc]\n"   // store argc
+		"str r1, %[argv]\n"   // store argv
+		"str r2, %[envp]\n"   // store envp
+
+		// Align stack to 8 bytes before call
+		"bic sp, sp, #7\n"
 		"bl StartC\n"
-		"mov r0, r0\n" /* return code */
-		"mov r7, #1\n" /* sys_exit */
+
+		// If returns, exit(r0)
+		"mov r7, #1\n"        // macOS/iOS sys_exit
 		"svc 0\n"
+		:
+		[argc] "=m" (gArgc),
+		[argv] "=m" (gArgv),
+		[envp] "=m" (gEnvp)
+		:
+		: "r0","r1","r2","r7","lr","memory"
 	);
 #else
 #error "Unsupported architecture"
 #endif
+
+// ============================
+// MARK: LINUX
+// =============================
+
 #elif defined(__linux__)
+
+NLC_ATTR_USED
+void StartC(long argc, char** argv) {
+	argc = (long)gArgc;
+	argv = (cStr*)gArgv;
+	cStr* envp = (cStr*)gEnvp;
+
+	while (*envp) envp++;
+	gAuxv = (uPtr*)(envp + 1);
+	const int status = main((int)argc, argv);
+	SysExit(status);
+}
+
+NLC_ATTR_NAKED
+void _start() { // NOLINT(*-reserved-identifier)
 #if defined(__x86_64__)
 	asm volatile (
-		// At entry: rsp -> argc
-		"pop %%rdi\n"           // rdi = argc
-		"mov %%rsp, %%rsi\n"    // rsi = argv (rsp points to argv[0])
-		"mov %%rsi, %%rdx\n"    // rdx = envp pointer start
+		"pop %%rdi\n"                 // argc
+		"mov %%rsp, %%rsi\n"          // argv
+		"lea 8(%%rsi,%%rdi,8), %%rdx\n"  // envp = argv + argc + NULL
+
 		"mov %%rdi, gArgc(%%rip)\n"
 		"mov %%rsi, gArgv(%%rip)\n"
-		"lea (%%rsi,%%rdi,8), %%rdx\n" // envp = argv + argc
 		"mov %%rdx, gEnvp(%%rip)\n"
 
-		// Align stack to 16 bytes before call
-		"andq $-16, %%rsp\n"
+		"sub $8, %%rsp\n"             // align stack to 16 before call
 		"call StartC\n"
 
-		// Should never return; if it does, exit
-		"mov $60, %%rax\n"  // SYS_exit
-		"xor %%rdi, %%rdi\n" // exit code 0
+		"mov $"XSTR(SYS_exit)", %%rax\n"            // SYS_exit
+		"xor %%rdi, %%rdi\n"          // exit code 0
 		"syscall\n"
 		:
 		:
-		: "rax", "rdi", "rsi", "rdx", "memory"
+		: "rax","rdi","rsi","rdx","memory"
 	);
 #elif defined(__i386__)
 	asm volatile (
-		// Stack layout on entry:
-		// esp -> argc
-		//       argv[0], argv[1], ..., argv[argc-1], NULL
-		//       envp[0], ...
-		"pop %%eax\n"         // eax = argc
-		"mov %%esp, %%ebx\n"  // ebx = argv
-		"mov %%eax, gArgc\n"
-		"mov %%ebx, gArgv\n"
+		// At entry: esp -> argc
+		"pop %%ebx\n"           // ebx = argc
+		"mov %%esp, %%ecx\n"    // ecx = argv (esp points to argv[0])
+		"lea 4(%%ecx, %%ebx, 4), %%edx\n" // edx = envp = argv + argc + NULL
 
-		// Compute envp: argv + argc + 1
-		"mov %%eax, %%ecx\n"  // ecx = argc
-		"add $1, %%ecx\n"
-		"shl $2, %%ecx\n"     // ecx = (argc + 1) * 4 bytes
-		"add %%ebx, %%ecx\n"  // ecx = envp pointer
-		"mov %%ecx, gEnvp\n"
+		// Store globals
+		"mov %%ebx, gArgc(%%ebx)\n"  // gArgc = argc
+		"mov %%ecx, gArgv(%%ebx)\n"  // gArgv = argv
+		"mov %%edx, gEnvp(%%ebx)\n"  // gEnvp = envp
 
-		// Push arguments for StartC (cdecl)
-		"push %%ecx\n"        // envp
-		"push %%ebx\n"        // argv
-		"push %%eax\n"        // argc
+		// Call C entry point
 		"call StartC\n"
 
-		// Should not return; exit if it does
-		"mov $1, %%eax\n"     // SYS_exit
-		"xor %%ebx, %%ebx\n"
+		// If returns, exit(0)
+		"mov $"XSTR(SYS_exit)", %%eax\n"	// sys_exit
+		"xor %%ebx, %%ebx\n"				// exit code 0
 		"int $0x80\n"
 		:
 		:
-		: "eax", "ebx", "ecx", "memory"
+		: "eax","ebx","ecx","edx","memory"
 	);
 #elif  defined(__aarch64__)
-	asm volatile(
-		// Entry: sp -> argc
-		"ldr x0, [sp]\n"          // argc
-		"add x1, sp, #8\n"        // argv
-		// Save globals
-		"adr x2, gArgc\n"
-		"str x0, [x2]\n"
-		"adr x2, gArgv\n"
-		"str x1, [x2]\n"
-		"adr x2, gEnvp\n"
-		"add x3, x1, x0, lsl #3\n" // argv + argc*8
-		"add x3, x3, #8\n"          // skip NULL -> envp
-		"str x3, [x2]\n"
-		// Align stack to 16 bytes before call
-		"and sp, sp, #-16\n"
-		// Call C entry
-		"bl StartC\n"
-		// Exit if it returns
-		"mov x8, #93\n"
-		"mov x0, #0\n"
-		"svc #0\n"
-		:
-		:
-		: "x0","x1","x2","x3","x30","memory"
-	);
+	asm volatile (
+		// Store argc, argv, envp
+		"adrp x0, gArgc@PAGE\n"        // x0 = base of gArgc page
+		"add  x0, x0, gArgc@PAGEOFF\n"
+		"str  w0, [x0]\n"              // store argc
+		"ldr  x1, [sp, #8]\n"          // argv pointer from original x1 on stack
+		"str  x1, [x0, #8]\n"          // store argv
+		"ldr  x2, [sp, #16]\n"         // envp pointer from stack
+		"str  x2, [x0, #16]\n"         // store envp
 
-#elif defined(__arm__)
-	register uint32_t *r2 asm("r2") = &gArgc;
-	register uint32_t *r3 asm("r3") = &gArgv;
-	register uint32_t *r4 asm("r4") = &gEnvp;
-	asm volatile(
-		"ldr r0, [sp]\n"           // argc
-		"add r1, sp, #4\n"         // argv
-		// Save globals
-		"str r0, [r2]\n"           // gArgc
-		"str r1, [r3]\n"           // gArgv
-		"add r5, r1, r0, lsl #2\n" // argv + argc*4
-		"add r5, r5, #4\n"          // skip NULL -> envp
-		"str r5, [r4]\n"           // gEnvp
-		// Call C entry
-		"mov r0, r0\n"             // argc
-		"mov r1, r1\n"             // argv
-		"mov r2, r5\n"             // envp
+		// Align stack
+		"and sp, sp, #-16\n"
+
+		// Call C entry point
 		"bl StartC\n"
-		// Exit if it returns
-		"mov r7, #1\n"             // SYS_exit
-		"mov r0, #0\n"             // exit code
-		"svc #0\n"
+
+		// Exit(0)
+		"mov x0, #0\n"
+		"mov x8, #93\n"
+		"svc #0\n"		// SYS_exit
 		:
 		:
-		: "r0","r1","r2","r3","r4","r5","lr","memory"
+		: "x0","x1","x2","x8","memory"
+	);
+#elif defined(__arm__)
+	asm volatile (
+		// At entry: r0 = argc
+		"adr r3, gArgc\n"
+		"str r0, [r3]\n"
+		"adr r3, gArgv\n"
+		"str r1, [r3]\n"
+		"adr r3, gEnvp\n"
+		"str r2, [r3]\n"
+
+		// Align stack to 8 bytes before call
+		"bic sp, sp, #7\n"
+		"bl StartC\n"
+
+		// Exit(0)
+		"mov r0, #0\n"
+		"mov r7, #" XSTR(SYS_exit) "\n" // SYS_exit
+		"svc 0\n"
+		:
+		:
+		: "r0","r1","r2","r3","r7","memory"
 	);
 #else
 #error "Unsupported architecture"
 #endif
+
 #endif
 }

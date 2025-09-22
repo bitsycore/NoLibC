@@ -53,7 +53,7 @@
 		# define SYS_pread64   17
 		# define SYS_pwrite64  18
 		# define SYS_munmap    11
-		# define SYS_exit		60
+		# define SYS_exit      60
 
 	# elif defined(__i386__)
 

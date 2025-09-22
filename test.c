@@ -423,8 +423,8 @@ int main(const int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	FIXMEtestTerminal();
-	return 0;
+	//FIXMEtestTerminal();
+	//return 0;
 	testColor();
 	testFileWrite();
 	testPrintAndFormat();
