@@ -1,8 +1,8 @@
 #ifndef NOLIBC_WRITER_BUFFER_H
 #define NOLIBC_WRITER_BUFFER_H
 
-#include "../public/nlc_types.h"
-#include "../public/nlc_varg.h"
+#include "nlc_types.h"
+#include "nlc_varg.h"
 
 #define OUTBUF_SIZE 1024
 

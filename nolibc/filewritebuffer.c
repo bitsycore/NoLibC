@@ -1,4 +1,4 @@
-#include "private/filewritebuffer.h"
+#include "public/nlc_filewritebuffer.h"
 
 #include "private/system.h"
 #include "public/nlc_iwriter.h"

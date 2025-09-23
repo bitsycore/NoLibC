@@ -1,5 +1,5 @@
 #include "private/system.h"
-#include "private/filewritebuffer.h"
+#include "public/nlc_filewritebuffer.h"
 #include "public/nlc_file.h"
 #include "public/nlc_string.h"
 

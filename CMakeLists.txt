@@ -91,7 +91,7 @@ add_library(NoLibC STATIC
 		nolibc/private/entry.h
 		nolibc/private/intrinsic.h
 		nolibc/private/system.h
-		nolibc/private/filewritebuffer.h
+		nolibc/public/nlc_filewritebuffer.h
 		nolibc/public/nlc.h
 		nolibc/public/nlc_arena.h
 		nolibc/public/nlc_file.h
