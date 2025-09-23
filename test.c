@@ -5,7 +5,7 @@
 
 #define TPRE AC_GREEN "[TEST]" AC_RESET ": "
 
-#define SEPAR PrintLnK("----------------------------------------")
+#define SEPAR PrintK("----------------------------------------\n")
 
 NLC_ATTR_NO_INLINE
 void testColor() {
@@ -419,17 +419,17 @@ void testTerminal(void) {
 	terminalRestore(&orig);
 }
 
+NLC_ATTR_NO_INLINE
 void testFormatCStr(void) {
 	PrintLnK(TPRE "FormatCStr");
-
-	const cStr fmt = TPRE "Hello %s, your score is %d and your average is %9f!";
+	const cStr fmt = TPRE "Hello %s, your score is %d and your average is %9f!\n";
 	const cStr name = "Player1";
 	const int score = 12345;
 	const f64 average = 98.7654321;
-	const u8 size = FormatCStr(null, 0, fmt, name, score, average);
+	const u8 size = FormatCStr(null, 0, fmt, name, score, average) + 1;
 	PrintFmt(TPRE "FormatCStr size=%d\n", size);
-	Arena* arena = ArenaNew(size+1);
-	s8* buffer = ArenaAlloc(arena, size+1);
+	Arena* arena = ArenaNew(size);
+	s8* buffer = ArenaAlloc(arena, size);
 	FormatCStr(buffer, size, fmt, name, score, average);
 	PrintLen(buffer, size);
 	ArenaFree(arena);
