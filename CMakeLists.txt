@@ -110,6 +110,7 @@ add_library(NoLibC STATIC
 		nolibc/public/nlc_iwriter.h
 		nolibc/stringbuffer.c
 		nolibc/public/nlc_stringbuffer.h
+		nolibc/public/nlc_maths.h
 )
 
 target_compile_options(NoLibC PUBLIC ${COMMON_COMPILE_OPTIONS})

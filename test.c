@@ -1,11 +1,11 @@
 #include <nlc.h>
 
+#include "nlc_maths.h"
 #include "nolibc/private/system.h"
 
-#define MIN(a, b)      ((a) < (b) ? (a) : (b))
-#define MAX(a, b)      ((a) > (b) ? (a) : (b))
-#define CLAMP(x, lo, hi)  ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #define TPRE AC_GREEN "[TEST]" AC_RESET ": "
+
+#define SEPAR PrintLnK("----------------------------------------")
 
 NLC_ATTR_NO_INLINE
 void testColor() {
@@ -164,7 +164,6 @@ NLC_ATTR_NO_INLINE
 void testFileWrite() {
 	const Str filename = StrConst("testfile.txt");
 	const Str message = StrConst(TPRE "FileOpen, FileWrite, FileClose, FileOpen, FileRead\n");
-	u8 buffer[message.len];
 
 	int fd = FileOpen(filename.str, OPEN_WRITE | OPEN_CREATE_IF_NEED | OPEN_TRUNCATE);
 	if (fd < 0) Exit(1);
@@ -175,6 +174,8 @@ void testFileWrite() {
 	if (fd < 0) Exit(1);
 	const s64 result = FileSize(fd);
 	PrintFmt(TPRE "FileSize=%d\n", result);
+
+	u8 buffer[message.len];
 	const s64 n = FileRead(fd, buffer, sizeof(buffer));
 	FileClose(fd);
 
@@ -375,7 +376,7 @@ void testTerminal(void) {
         if(c==3) break; // End of Text // Ctrl-C
 		if(c==127/*DEL*/||c==8/*Backspace*/){
 			if(cursor_x>0) {
-				cursor_x = MAX(1, cursor_x-1);
+				cursor_x = Max(1, cursor_x-1);
 				screen[cursor_y][cursor_x]=' ';
 				terminalSetCursor(cursor_x, cursor_y);
 				terminalDrawChar(screen[cursor_y][cursor_x]);
@@ -385,7 +386,7 @@ void testTerminal(void) {
 		else if(c>=32 && c<=126){ // Printable
 			screen[cursor_y][cursor_x] = c;
 			terminalDrawChar(screen[cursor_y][cursor_x]);
-			cursor_x = MIN(WIDTH-2, cursor_x+1);
+			cursor_x = Min(WIDTH-2, cursor_x+1);
 			terminalLog("[%d, %d], lastKey=%c", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y, buf[0]);
 		}
     	// arrow keys
@@ -395,19 +396,19 @@ void testTerminal(void) {
 			if(FileRead(FILE_STDIN, (u8*)&seq[1], 1)==0) continue;
 			if(seq[0]=='['){
 				if(seq[1]=='A') {
-					cursor_y = MAX(cursor_y-1, 1); // up
+					cursor_y = Max(cursor_y-1, 1); // up
 					terminalLog("[%d, %d], lastKey=UP", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
 				}
 				else if(seq[1]=='D') {
-					cursor_x = MAX(cursor_x-1, 1); // left
+					cursor_x = Max(cursor_x-1, 1); // left
 					terminalLog("[%d, %d], lastKey=LEFT", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
 				}
 				else if(seq[1]=='B') {
-					cursor_y = MIN(cursor_y+1, HEIGHT-2); // down
+					cursor_y = Min(cursor_y+1, HEIGHT-2); // down
 					terminalLog("[%d, %d], lastKey=DOWN", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
 				}
 				else if(seq[1]=='C') {
-					cursor_x = MIN(cursor_x+1, WIDTH-2); // right
+					cursor_x = Min(cursor_x+1, WIDTH-2); // right
 					terminalLog("[%d, %d], lastKey=RIGHT", cursor_x, cursor_y, WIDTH, HEIGHT, cursor_x, cursor_y);
 				}
 			}
@@ -420,12 +421,14 @@ void testTerminal(void) {
 
 void testFormatCStr(void) {
 	PrintLnK(TPRE "FormatCStr");
-	Arena* arena = ArenaNew(16 * 4096);
+
 	const cStr fmt = TPRE "Hello %s, your score is %d and your average is %9f!";
 	const cStr name = "Player1";
 	const int score = 12345;
 	const f64 average = 98.7654321;
 	const u8 size = FormatCStr(null, 0, fmt, name, score, average);
+	PrintFmt(TPRE "FormatCStr size=%d\n", size);
+	Arena* arena = ArenaNew(size+1);
 	s8* buffer = ArenaAlloc(arena, size+1);
 	FormatCStr(buffer, size, fmt, name, score, average);
 	PrintLen(buffer, size);
@@ -439,10 +442,15 @@ int main(const int argc, cStr* argv) {
 
 	//testTerminal();
 	testColor();
+	SEPAR;
 	testFileWrite();
+	SEPAR;
 	testPrintAndFormat();
+	SEPAR;
 	testStrings();
+	SEPAR;
 	testArena();
+	SEPAR;
 	testFormatCStr();
 
 	return 0;
