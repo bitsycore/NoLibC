@@ -203,7 +203,7 @@ void testStrings(void) {
 	const f64 f4 = 987.567123456789;
 	PrintFmt(TPRE "cStrLen=%d\n", cStrLen(s3));
 	PrintFmt(TPRE "cStrLenK=%d\n", cStrLenK(s3));
-	PrintFmt(TPRE "PrintFmt with ptr, float=%9f\n", &f4);
+	PrintFmt(TPRE "PrintFmt with ptr, float=%9f\n", f4);
 }
 
 NLC_ATTR_NO_INLINE
@@ -418,17 +418,32 @@ void testTerminal(void) {
 	terminalRestore(&orig);
 }
 
+void testFormatCStr(void) {
+	PrintLnK(TPRE "FormatCStr");
+	Arena* arena = ArenaNew(16 * 4096);
+	const cStr fmt = TPRE "Hello %s, your score is %d and your average is %9f!";
+	const cStr name = "Player1";
+	const int score = 12345;
+	const f64 average = 98.7654321;
+	const u8 size = FormatCStr(null, 0, fmt, name, score, average);
+	s8* buffer = ArenaAlloc(arena, size+1);
+	FormatCStr(buffer, size, fmt, name, score, average);
+	PrintLen(buffer, size);
+	ArenaFree(arena);
+}
+
 NLC_ATTR_NO_INLINE
 int main(const int argc, cStr* argv) {
 	(void)argc;
 	(void)argv;
 
-	testTerminal();
+	//testTerminal();
 	testColor();
 	testFileWrite();
 	testPrintAndFormat();
 	testStrings();
 	testArena();
+	testFormatCStr();
 
 	return 0;
 }

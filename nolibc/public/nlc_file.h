@@ -2,7 +2,7 @@
 #define NOLIBC_NLC_FILE_H
 
 #include "nlc_types.h"
-#include "nlc_va_list.h"
+#include "nlc_varg.h"
 
 int FileOpen(const cStr filename, int flags);
 void FileClose(int fd);

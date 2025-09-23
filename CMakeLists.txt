@@ -91,7 +91,7 @@ add_library(NoLibC STATIC
 		nolibc/private/entry.h
 		nolibc/private/intrinsic.h
 		nolibc/private/system.h
-		nolibc/private/write_buffer.h
+		nolibc/private/filewritebuffer.h
 		nolibc/public/nlc.h
 		nolibc/public/nlc_arena.h
 		nolibc/public/nlc_file.h
@@ -104,8 +104,12 @@ add_library(NoLibC STATIC
 		nolibc/public/nlc_types.h
 		nolibc/string.c
 		nolibc/system.c
-		nolibc/write_buffer.c
-		nolibc/public/nlc_va_list.h
+		nolibc/filewritebuffer.c
+		nolibc/public/nlc_varg.h
+		nolibc/iwriter.c
+		nolibc/public/nlc_iwriter.h
+		nolibc/stringbuffer.c
+		nolibc/public/nlc_stringbuffer.h
 )
 
 target_compile_options(NoLibC PUBLIC ${COMMON_COMPILE_OPTIONS})

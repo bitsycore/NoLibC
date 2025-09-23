@@ -1,3 +1,5 @@
+#include "public/nlc_stringbuffer.h"
+#include "public/nlc_iwriter.h"
 #include "public/nlc_types.h"
 
 uSize FormatUnsignedToCStr(u64 value, const s8 base, cStr out, const u32 min_width) {
@@ -66,4 +68,20 @@ void FormatFloatToCStr(f64 value, cStr out, u64* outLen, const u32 precision) {
     }
 
     *outLen = pos;
+}
+
+u64 FormatCStrV(s8* buf, const u64 size, const cStr fmt, VaList vaList) {
+	StringBuffer sb = { buf, size, 0 };
+	const IWriter w = StringBufferToIWriter(&sb);
+	IWriterFmtV(&w, fmt, vaList);
+	if (buf) buf[sb.len] = '\0';
+	return sb.len;
+}
+
+u64 FormatCStr(s8* buf, const u64 size, const cStr fmt, ...) {
+	VaList vaList;
+	VaStart(vaList, fmt);
+	const u64 len = FormatCStrV(buf, size, fmt, vaList);
+	VaEnd(vaList);
+	return len;
 }

@@ -1,5 +1,5 @@
 #include "private/system.h"
-#include "private/write_buffer.h"
+#include "private/filewritebuffer.h"
 #include "public/nlc_file.h"
 #include "public/nlc_string.h"
 
@@ -12,33 +12,33 @@
 // ---------------------------
 
 void FileWriteFmtV(const int fd, const cStr fmt, VaList argList) {
-	WriteBuffer b = {.len = 0, .fd = fd};
-	WriteBufferFmtV(&b, fmt, argList);
-	WriteBufferFlush(&b);
+	FileWriteBuffer b = {.len = 0, .fd = fd};
+	FileWriteBufferFmtV(&b, fmt, argList);
+	FileWriteBufferFlush(&b);
 }
 
 void FileWriteFmt(const int fd, const cStr fmt, ...) {
-	WriteBuffer b = {.len = 0, .fd = fd};
+	FileWriteBuffer b = {.len = 0, .fd = fd};
 	VaList ap;
 	VaStart(ap, fmt);
-	WriteBufferFmtV(&b, fmt, ap);
+	FileWriteBufferFmtV(&b, fmt, ap);
 	VaEnd(ap);
-	WriteBufferFlush(&b);
+	FileWriteBufferFlush(&b);
 }
 
 void PrintFmt(const cStr fmt, ...) {
-	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
+	FileWriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
 	VaList va;
 	VaStart(va, fmt);
-	WriteBufferFmtV(&b, fmt, va);
+	FileWriteBufferFmtV(&b, fmt, va);
 	VaEnd(va);
-	WriteBufferFlush(&b);
+	FileWriteBufferFlush(&b);
 }
 
 void PrintFmtV(const cStr fmt, VaList argList) {
-	WriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
-	WriteBufferFmtV(&b, fmt, argList);
-	WriteBufferFlush(&b);
+	FileWriteBuffer b = {.len = 0, .fd = FILE_STDOUT};
+	FileWriteBufferFmtV(&b, fmt, argList);
+	FileWriteBufferFlush(&b);
 }
 
 // ---------------------------

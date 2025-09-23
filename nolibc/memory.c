@@ -13,13 +13,13 @@ uSize MemoryPageSize() {
 #if __linux__
 	static uSize PAGE_SIZE_CALCULATED = 0;
 	if (PAGE_SIZE_CALCULATED != 0) return PAGE_SIZE_CALCULATED;
-	const uPtr* stackPtr = (uPtr*)gAuxv;
-	while (stackPtr[0] != AT_NULL) {
-		if (stackPtr[0] == AT_PAGESZ) {
-			pageSize = stackPtr[1];
+	const uPtr* auxvPtr = (uPtr*)gAuxv;
+	while (auxvPtr[0] != AT_NULL) {
+		if (auxvPtr[0] == AT_PAGESZ) {
+			pageSize = auxvPtr[1];
 			break;
 		}
-		stackPtr += 2;
+		auxvPtr += 2;
 	}
 	PAGE_SIZE_CALCULATED = pageSize;
 #elif __APPLE__
